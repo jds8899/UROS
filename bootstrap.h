@@ -60,4 +60,8 @@
 #define	RMTEXT_SEGMENT	0x00000300
 #define	RMTEXT_ADDRESS	0x00003000
 
+#define GDT64_ADDRESS	0x00001500
+#define	GDT64_CODE	0x0008		/* All of memory, R/E */
+#define	GDT64_DATA	0x0010		/* All of memory, R/W */
+
 #endif

@@ -125,7 +125,7 @@ LDFLAGS = -melf_i386
 	$(CPP) $(CPPFLAGS) -o $*.s $*.S
 
 .S.o:
-	$(CPP) $(CPPFLAGS) -g -o $*.s $*.S
+	$(CPP) $(CPPFLAGS) -o $*.s $*.S
 	$(AS) $(ASFLAGS) -o $*.o $*.s -a=$*.lst
 	$(RM) -f $*.s
 

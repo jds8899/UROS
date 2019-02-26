@@ -1,23 +1,26 @@
 /*
 ** SCCS ID:	%W%	%G%
 **
-** File:	?
+** File:	long_mode.S
 **
-** Author:	CSCI-452 class of 20175
+** Author:	Jonathan Schenk
 **
 ** Contributor:
 **
-** Description:	?
+** Description:	Transitions CPU from Protected Mode to Long Mode
 */
 
 #include "bootstrap.h"
 
 	.code32
 
-  .globl _long_mode_init
+	.globl _long_mode_init
 
 _long_mode_init:
 	cli
+	xor		%ax, %ax		// Make sure es and ds are 0
+	mov		%eax, %ds		// For later copy operations
+	mov		%eax, %es
 	call	check_cpuid
 	call	check_long_mode
 
@@ -29,9 +32,6 @@ check_cpuid:
 	pushfl
 	pop		%eax
 	mov		%eax, %ecx
-	//mov		$1, %ebx
-	//shl		$21, %ebx
-	//xor		%ebx, %eax
 	xor		$1 << 21, %eax
 	push	%eax
 	popfl
@@ -56,9 +56,6 @@ check_long_mode:
 
 	mov		$0x80000001, %eax
 	cpuid
-	//mov		$1, %ebx
-	//shl		$29, %ebx
-	//test	%edx, %ebx
 	test	$1 << 29, %edx
 	jz		no_long_mode
 	ret
@@ -67,9 +64,9 @@ check_long_mode:
 enable_paging:
 	mov		$RMTEXT_ADDRESS, %edi
 	mov		%edi, %cr3
-	xor		%eax, %eax
-	mov		$4096, %ecx
-	rep		stosl
+	//xor		%eax, %eax
+	//mov		$4096, %ecx
+	//rep		stosl
 	mov		%cr3, %edi
 
 	mov		$RMTEXT_ADDRESS, %edx
@@ -93,24 +90,15 @@ set_entry:
 	loop	set_entry
 
 	mov		%cr4, %eax
-	//mov		$1, %edx
-	//shl		$5, %edx
-	//or		%edx, %eax
 	or		$1 << 5, %eax
 	mov		%eax, %cr4
 
 	mov		$0xC0000080, %ecx
 	rdmsr
-	//mov		$1, %edx
-	//shl		$8, %edx
-	//or		%edx, %eax
 	or		$1 << 8, %eax
 	wrmsr
 
 	mov		%cr0, %eax
-	//mov		$1, %edx
-	//shl		$31, %edx
-	//or		%edx, %eax
 	or		$1 << 31, %eax
 	mov		%eax, %cr0
 
@@ -122,10 +110,13 @@ no_long_mode:
 gdt_setup:
 	call	move_gdt
 	lgdt	gdt_48
+stop:
+	jmp		stop
+	jmp		*lme
 
-	.byte	0xEA
+lme:
 	.long	long_mode_entry
-	.word	8
+	.word	GDT64_CODE
 
 	.code64
 long_mode_entry:
@@ -155,26 +146,23 @@ kill:
 ** data from the beginning of the segment (0000:0000).
 */
 move_gdt:
-	xor		%eax, %eax
-	mov		%eax, %es
 	mov		$start_gdt, %esi
-	mov		$GDT_ADDRESS, %edi
+	mov		$GDT64_ADDRESS, %edi
 	movl	$gdt_len, %ecx
 	cld
 	rep	movsb
 	ret
 
 gdt_48:
-	.word	0x2000		/* 1024 GDT entries x 8 bytes/entry = 8192 */
-	.quad	GDT_ADDRESS
+	.word	0x18
+	.quad	GDT64_ADDRESS
 
 /*
-** The GDT.  This cannot be created in C because the bootstrap is not
-** linked with that code.
+** The GDT
 */
 start_gdt:
 
-	null_seg:	/* limit FFFFF, base 0, R/W data seg, 32-bit 4K */
+null_seg:	/* limit FFFFF, base 0, R/W data seg, 32-bit 4K */
 	.word	0xFFFF	/* limit[15:0] */
 	.word	0x0000	/* base[15:0] */
 	.byte	0x00	/* base[23:16] */
@@ -186,15 +174,15 @@ code_seg:	/* limit FFFFF, base 0, R/E code seg, 32-bit 4K */
 	.word	0x0000
 	.word	0x0000
 	.byte	0x00
-	.byte	0x9A	/* 1 00 1 1010: present, prio 0, C/D, R/E code */
-	.byte	0xAF	/* 1 1 00 1111: 4K, 32-bit, 0, 0, limit[19:16] */
+	.byte	0x98	/* : present, prio 0, C/D, R/E code */
+	.byte	0x20	/* : 4K, 32-bit, 0, 0, limit[19:16] */
 	.byte	0x00
 
 data_seg:	/* limit FFFFF, base 0, R/W data seg, 32-bit 4K */
 	.word	0x0000
 	.word	0x0000
 	.byte	0x00
-	.byte	0x92	/* 1 00 1 0010: present, prio 0, C/D, R/W data */
+	.byte	0x90	/* : present, prio 0, C/D, R/W data */
 	.byte	0x00
 	.byte	0x00
 
