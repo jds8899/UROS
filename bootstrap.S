@@ -364,7 +364,7 @@ err_diskfail:
 ** The GDTR and IDTR contents.
 */
 gdt_48:
-	.word	0x28		/* 1024 GDT entries x 8 bytes/entry = 8192 */
+	.word	0x500		/* 1024 GDT entries x 8 bytes/entry = 8192 */
 	.quad	GDT_ADDRESS
 
 idt_48:
