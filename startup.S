@@ -16,7 +16,8 @@
 **
 ** This code is intended to be assembled with as, not as86.
 */
-	.arch	i386
+
+	.code32
 
 #include "bootstrap.h"
 
@@ -90,7 +91,7 @@ clearbss:
 **
 ** Initialize devices
 */
-	call	_init		// initialize the OS
+//	call	_init		// initialize the OS
 
 /*
 ** Restore the first user process context
@@ -99,7 +100,7 @@ clearbss:
 ** we're returning to the context restore routine after handling
 ** an interrupt!!!
 */
-	jmp	__isr_restore   // defined in isr_stubs.S
+//	jmp	__isr_restore   // defined in isr_stubs.S
 
 #else
 

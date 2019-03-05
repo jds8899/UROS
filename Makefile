@@ -10,26 +10,25 @@
 #
 # User supplied files
 #
-SYS_C_SRC = clock.c klibc.c kmalloc.c pcbs.c queues.c scheduler.c \
-	sio.c stacks.c syscalls.c system.c
+SYS_C_SRC = 
 
-SYS_C_OBJ = clock.o klibc.o kmalloc.o pcbs.o queues.o scheduler.o \
-	sio.o stacks.o syscalls.o system.o
+SYS_C_OBJ = 
 
-SYS_S_SRC = klibs.S
+SYS_S_SRC =
 
-SYS_S_OBJ = klibs.o
+SYS_S_OBJ =
 
 SYS_SRCS = $(SYS_C_SRC) $(SYS_S_SRC)
+
 SYS_OBJS = $(SYS_C_OBJ) $(SYS_S_OBJ)
 
-USR_C_SRC = ulibc.c users.c
+USR_C_SRC =
 
-USR_C_OBJ = ulibc.o users.o
+USR_C_OBJ =
 
-USR_S_SRC = ulibs.S
+USR_S_SRC =
 
-USR_S_OBJ = ulibs.o
+USR_S_OBJ =
 
 USR_SRCS = $(USR_C_SRC) $(USR_S_SRC)
 USR_OBJS = $(USR_C_OBJ) $(USR_S_OBJ)
@@ -87,13 +86,13 @@ CPP = cpp
 CPPFLAGS = $(USER_OPTIONS) -nostdinc $(INCLUDES)
 
 CC = gcc
-CFLAGS = -m32 -std=c99 -fno-stack-protector -fno-builtin -Wall -Wstrict-prototypes $(CPPFLAGS)
+CFLAGS = -std=c99 -fno-stack-protector -fno-builtin -Wall -Wstrict-prototypes $(CPPFLAGS)
 
 AS = as
-ASFLAGS = --32
+ASFLAGS =
 
 LD = ld
-LDFLAGS = -melf_i386
+LDFLAGS = -melf_x86_64
 
 #		
 # Transformation rules - these ensure that all compilation
@@ -143,13 +142,13 @@ BOOT_SRC = bootstrap.S
 
 # Assembly language object/source files
 
-FMK_S_OBJ = long_mode.o startup.o isr_stubs.o $(U_S_OBJ)
-FMK_S_SRC = long_mode.S	startup.S isr_stubs.S $(U_S_SRC)
+FMK_S_OBJ = long_mode.o startup.o $(U_S_OBJ)
+FMK_S_SRC = long_mode.S	startup.S $(U_S_SRC)
 
 # C object/source files
 
-FMK_C_OBJ =	c_io.o support.o $(U_C_OBJ)
-FMK_C_SRC =	c_io.c support.c $(U_C_SRC)
+FMK_C_OBJ =	c_io.o $(U_C_OBJ)
+FMK_C_SRC =	c_io.c $(U_C_SRC)
 
 # Collections of files
 
@@ -175,10 +174,10 @@ prog.out: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o prog.out $(OBJECTS)
 
 prog.o:	$(OBJECTS)
-	$(LD) $(LDFLAGS) -o prog.o -Ttext 0x10000 $(OBJECTS) $(U_LIBS)
+	$(LD) $(LDFLAGS) -o prog.o -Ttext 0x10000 -Tdata 0x12000 -Tbss 0x13000 $(OBJECTS) $(U_LIBS)
 
 prog.b:	prog.o
-	$(LD) $(LDFLAGS) -o prog.b -s --oformat binary -Ttext 0x10000 prog.o
+	$(LD) $(LDFLAGS) -o prog.b -s --oformat binary -Ttext 0x10000 -Tdata 0x12000 -Tbss 0x13000 prog.o
 
 #
 # Targets for copying bootable image onto boot devices
@@ -214,7 +213,7 @@ Offsets:	Offsets.c
 #
 
 clean:
-	rm -f *.X *.nl *.lst *.b *.o *.image *.dis BuildImage Offsets
+	rm -f *.X *.nl *.lst *.b *.o *.image *.dis *.s BuildImage Offsets
 
 realclean:	clean
 

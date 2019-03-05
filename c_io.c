@@ -30,11 +30,11 @@
 #define	SCREEN_MAX_X	( SCREEN_X_SIZE - 1 )
 #define	SCREEN_MAX_Y	( SCREEN_Y_SIZE - 1 )
 
-unsigned int	scroll_min_x, scroll_min_y;
-unsigned int	scroll_max_x, scroll_max_y;
-unsigned int	curr_x, curr_y;
-unsigned int	min_x, min_y;
-unsigned int	max_x, max_y;
+unsigned long	scroll_min_x, scroll_min_y;
+unsigned long	scroll_max_x, scroll_max_y;
+unsigned long	curr_x, curr_y;
+unsigned long	min_x, min_y;
+unsigned long	max_x, max_y;
 
 #ifdef	SA_DEBUG
 #include <stdio.h>
@@ -88,7 +88,7 @@ static unsigned int __c_strlen( char const *str ){
 	return len;
 }
 
-static void __c_putchar_at( unsigned int x, unsigned int y, unsigned int c ){
+static void __c_putchar_at( unsigned int x, unsigned long y, unsigned long c ){
 	/*
 	** If x or y is too big or small, don't do any output.
 	*/
@@ -719,11 +719,13 @@ void c_io_init( void ){
 	curr_y = min_y;
 	curr_x = min_x;
 	__c_setcursor();
+	c_clearscreen();
+	c_printf_at(0,0,"%d, %d\n%s", 6, 9, "doodoo");
 
 	/*
 	** Set up the interrupt handler for the keyboard
 	*/
-	__install_isr( INT_VEC_KEYBOARD, __c_keyboard_isr );
+	//__install_isr( INT_VEC_KEYBOARD, __c_keyboard_isr );
 }
 
 #ifdef SA_DEBUG

@@ -18,9 +18,9 @@
 
 _long_mode_init:
 	cli
-	xor		%ax, %ax		// Make sure es and ds are 0
-	mov		%eax, %ds		// For later copy operations
-	mov		%eax, %es
+	//xor		%ax, %ax		// Make sure es and ds are 0
+	//mov		%eax, %ds		// For later copy operations
+	//mov		%eax, %es
 	call	check_cpuid
 	call	check_long_mode
 
@@ -110,19 +110,28 @@ no_long_mode:
 gdt_setup:
 	call	move_gdt
 	lgdt	gdt_48
-stop:
-	jmp		stop
-	jmp		*lme
+	//jmp		*lme
 
-lme:
+	.byte	0xEA
 	.long	long_mode_entry
 	.word	GDT64_CODE
 
 	.code64
 long_mode_entry:
-	mov		$0x7000, %rbx
-	movq	$0x1F201F201F201F20, %rax
-	movq	%rax, (%rbx)
+	cli
+	xor		%eax, %eax
+	mov		$GDT64_DATA, %ax
+	mov		%ax, %ds
+	mov		%ax, %es
+	mov		%ax, %fs
+	mov		%ax, %gs
+	xor		%ax, %ax
+	mov		%ax, %ss
+	movq	$0x2f592f412f4b2f4f, %rax
+	movq	%rax, (0xb8000)
+	call	c_io_init
+	//call	c_clearscreen
+	//mov		$0x700000000, %rbx
 	hlt
 
 	.code32
@@ -146,11 +155,23 @@ kill:
 ** data from the beginning of the segment (0000:0000).
 */
 move_gdt:
-	mov		$start_gdt, %esi
-	mov		$GDT64_ADDRESS, %edi
-	movl	$gdt_len, %ecx
-	cld
-	rep	movsb
+	//mov		$start_gdt, %esi
+	//mov		$GDT64_ADDRESS, %edi
+	//movl	$gdt_len, %ecx
+	//cld
+	//rep	movsb
+	movl    $0x00010000, %eax
+	movl    %eax, 0x1504
+	movl    $0x0000FFFF, %eax
+	movl    %eax, 0x1500
+	movl    $0x00209800, %eax
+	movl    %eax, 0x150c
+	movl    $0x00000000, %eax
+	movl    %eax, 0x1508
+	movl    $0x00009000, %eax
+	movl    %eax, 0x1514
+	movl    $0x00000000, %eax
+	movl    %eax, 0x1510
 	ret
 
 gdt_48:

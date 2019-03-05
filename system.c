@@ -177,7 +177,6 @@ uint32_t _prune( void ) {
 ** first user process.
 */
 void _init( void ) {
-  for(;;){}
    pcb_t *pcb;
 
    /*
@@ -186,13 +185,14 @@ void _init( void ) {
    ** Initialize interrupt stuff.
    */
 
-   __init_interrupts();   // IDT and PIC initialization
+   //__init_interrupts();   // IDT and PIC initialization
 
    /*
    ** Console I/O system.
    */
 
    c_io_init();   // also installs a console receiver interrupt handler
+   for(;;){}
 #ifdef ISR_DEBUGGING_CODE
    c_setscroll( 0, 7, 99, 99 );
    c_puts_at( 0, 6, "================================================================================" );
