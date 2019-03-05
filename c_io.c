@@ -719,8 +719,8 @@ void c_io_init( void ){
 	curr_y = min_y;
 	curr_x = min_x;
 	__c_setcursor();
-	c_clearscreen();
-	c_printf_at(0,0,"%d, %d\n%s", 6, 9, "doodoo");
+	//c_clearscreen();
+	//c_printf_at(0,0,"%d, %d\n%s", 1, 2, "test");
 
 	/*
 	** Set up the interrupt handler for the keyboard
