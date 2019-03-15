@@ -63,7 +63,7 @@ void _put_char_or_code( int ch ) {
 **
 ** usage:  _kmemset( buffer, length, value )
 */
-void _kmemset( register uint8_t *buf, register uint32_t len,
+void _kmemset( register uint8_t *buf, register uint64_t len,
                register uint8_t value ) {
 
    while( len-- ) {
@@ -77,7 +77,7 @@ void _kmemset( register uint8_t *buf, register uint32_t len,
 **
 ** usage:  _kmemclr( buffer, length )
 */
-void _kmemclr( register uint8_t *buf, register uint32_t len ) {
+void _kmemclr( register uint8_t *buf, register uint64_t len ) {
 
    while( len-- ) {
       *buf++ = 0;
@@ -93,7 +93,7 @@ void _kmemclr( register uint8_t *buf, register uint32_t len ) {
 ** may not correctly deal with overlapping buffers
 */
 void _kmemcpy( register uint8_t *dst, register uint8_t *src,
-               register uint32_t len ) {
+               register uint64_t len ) {
 
    while( len-- ) {
       *dst++ = *src++;
@@ -117,7 +117,7 @@ char *_kstrcpy( register char *dst, register const char *src ) {
 ** _kstrlen() - return length of a NUL-terminated string
 */
 uint32_t _kstrlen( register const char *str ) {
-   register uint32_t len = 0;
+   register uint64_t len = 0;
 
    while( *str++ ) {
       ++len;

@@ -407,7 +407,7 @@ static int padstr( int x, int y, char *str, int len, int width, int leftadjust, 
 
 static void __c_do_printf( int x, int y, const char **f ){
 	char	*fmt = (char *) *f;
-	int	*ap;
+	long	*ap;
 	char	buf[ 12 ];
 	char	ch;
 	char	*str;
@@ -419,7 +419,7 @@ static void __c_do_printf( int x, int y, const char **f ){
 	/*
 	** Get characters from the format string and process them
 	*/
-	ap = (int *)( f + 1 );
+	ap = (long *)( f + 1 );
 	while( (ch = *fmt++) != '\0' ){
 		/*
 		** Is it the start of a format code?
@@ -719,8 +719,8 @@ void c_io_init( void ){
 	curr_y = min_y;
 	curr_x = min_x;
 	__c_setcursor();
-	//c_clearscreen();
-	//c_printf_at(0,0,"%d, %d\n%s", 1, 2, "test");
+	c_clearscreen();
+	c_printf_at(0,0,"%d, %d\n%s", 1, 2, "test");
 
 	/*
 	** Set up the interrupt handler for the keyboard

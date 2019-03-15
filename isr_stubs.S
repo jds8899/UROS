@@ -16,7 +16,7 @@
 **	This makes it possible for a common ISR to determine which
 **	interrupted occurred.
 */
-	.arch	i386
+	.code64
 
 #include "bootstrap.h"
 
@@ -37,14 +37,14 @@
 #define	ISR(vector)			\
 	.globl	__isr_##vector		; \
 __isr_##vector:				; \
-	pushl	$0			; \
-	pushl	$vector			; \
+	pushq	$0			; \
+	pushq	$vector			; \
 	jmp	isr_save
 
 #define	ERR_ISR(vector)		\
 	.globl	__isr_##vector		; \
 __isr_##vector:				; \
-	pushl	$vector			; \
+	pushq	$vector			; \
 	jmp	isr_save
 
 	.globl	__isr_table
@@ -78,35 +78,44 @@ isr_save:
 **	    saved CS		saved by the hardware
 **	    saved EFLAGS	saved by the hardware
 */
-	pusha			// save E*X, ESP, EBP, ESI, EDI
-	pushl	%ds		// save segment registers
-	pushl	%es
-	pushl	%fs
-	pushl	%gs
-	pushl	%ss
+	//pusha			// save E*X, ESP, EBP, ESI, EDI
+	//pushq	%ds		// save segment registers
+	//pushq	%es
+	//pushq	%fs
+	//pushq	%gs
+	//pushq	%ss
+	pushq	%rsi
+	pushq	%rdi
+	pushq	%rax
+	pushq	%rcx
+	pushq	%rdx
+	pushq	%r8
+	pushq	%r9
+	pushq	%r10
+	pushq	%r11
 
 /*
-** Stack contents (all 32-bit longwords) and offsets from ESP:
+** Stack contents (all 64-bit quadwords) and offsets from ESP:
 **
-**   SS GS FS ES DS EDI ESI EBP ESP EBX EDX ECX EAX vec cod EIP CS EFL
-**   0  4  8  12 16 20  24  28  32  36  40  44  48  52  56  60  64 68
+**   R11 R10 R9 R8 RDX RCX RAX RDI RSI vec cod EIP CS EFL
+**    0   8  16 24 32  40  48  56  64  72  80  88  96 104
 **
 ** Note that the saved ESP is the contents before the PUSHA.
 **
 ** Set up parameters for the ISR call.
 */
-	movl	52(%esp),%eax	// get vector number and error code
-	movl	56(%esp),%ebx
+	movq	72(%rsp),%rax	// get vector number and error code
+	movq	80(%rsp),%rcx
 
 /*
 ** MOD for 20175 CSCI452
 */
 
 	.globl	_current
-	.globl	_system_esp
+	.globl	_system_rsp
 
-	movl	_current, %edx	// save context pointer for the current proc
-	movl	%esp, (%edx)	// *** must be the first field in the PCB
+	movq	_current, %rdx	// save context pointer for the current proc
+	movq	%rsp, (%rdx)	// *** must be the first field in the PCB
 
 	/*
 	** IMPORTANT NOTE:  this code is inherently non-reentrant!
@@ -116,21 +125,21 @@ isr_save:
 	** need to be changed.
 	*/
 
-	movl	_system_esp, %esp	// switch to the OS stack
+	movq	_system_rsp, %rsp	// switch to the OS stack
 
 /*
 ** END MOD for 20175 CSCI452
 */
 
-	pushl	%ebx		// put them on the top of the stack ...
-	pushl	%eax		// ... as parameters for the ISR
+	pushq	%rcx		// put them on the top of the stack ...
+	pushq	%rax		// ... as parameters for the ISR
 
 /*
 ** Call the ISR
 */
-	movl	__isr_table(,%eax,4),%ebx
-	call	*%ebx
-	addl	$8,%esp		// pop the two parameters
+	movq	__isr_table(,%rax,8),%rcx
+	call	*%rcx
+	addq	$16,%rsp		// pop the two parameters
 
 /*
 ** Context restore begins here
@@ -141,8 +150,8 @@ __isr_restore:
 /*
 ** MOD for 20175 CSCI452
 */
-	movl	_current, %ebx	// return to user stack
-	movl	(%ebx), %esp	// ESP now points to context save area
+	movq	_current, %rdx	// return to user stack
+	movl	(%rdx), %rsp	// ESP now points to context save area
 
 /*
 ** END MOD for 20175 CSCI452
@@ -175,26 +184,26 @@ __isr_restore:
 
 	.globl	_system_time
 
-	xorl	%eax, %eax
-	movw	18(%ebx), %ax	// PPID
-	pushl	%eax
-	movw	16(%ebx), %ax	// PID
-	pushl	%eax
-	pushl	_system_time	// current system time
+	xorq	%rax, %rax
+	movw	26(%rdx), %ax	// PPID
+	pushq	%rax
+	movw	24(%rdx), %ax	// PID
+	pushq	%rax
+	pushq	_system_time	// current system time
 
 /*
 ** END MOD for 20175 CSCI452
 */
 
-	pushl	$fmt
-	pushl	$1
-	pushl	$0
+	pushq	$fmt
+	pushq	$1
+	pushq	$0
 	call	c_printf_at
 
 /*
 ** MOD for 20175 CSCI452
 */
-	addl	$24,%esp	// now six things to remove
+	addq	$48,%rsp	// now six things to remove
 
 /*
 ** END MOD for 20175 CSCI452
@@ -208,14 +217,23 @@ __isr_restore:
 /*
 ** Restore the context.
 */
-	popl	%ss		// restore the segment registers
-	popl	%gs
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popa			// restore others
-	addl	$8, %esp	// discard the error code and vector
-	iret			// and return
+	//popq	%ss		// restore the segment registers
+	//popq	%gs
+	//popq	%fs
+	//popq	%es
+	//popq	%ds
+	//popa			// restore others
+	popq	%r11
+	popq	%r10
+	popq	%r9
+	popq	%r8
+	popq	%rdx
+	popq	%rcx
+	popq	%rax
+	popq	%rdi
+	popq	%rsi
+	addq	$16, %rsp	// discard the error code and vector
+	iretq			// and return
 
 #ifdef ISR_DEBUGGING_CODE
 /*
@@ -226,13 +244,13 @@ __isr_restore:
 ** MOD MOD for 20175 CSCI452
 */
 fmt:	.ascii	"time %08x pid %5d ppid %5d\n"
-	.ascii	" ss=%08x  gs=%08x  fs=%08x  es=%08x  ds=%08x\n"
+//	.ascii	" ss=%08x  gs=%08x  fs=%08x  es=%08x  ds=%08x\n"
 /*
 ** END MOD for 20175 CSCI452
 */
-	.ascii	"edi=%08x esi=%08x ebp=%08x esp=%08x ebx=%08x\n"
-	.ascii	"edx=%08x ecx=%08x eax=%08x vec=%08x cod=%08x\n"
-	.string	"eip=%08x  cs=%08x efl=%08x\n"
+	.ascii	"r11=%08x r10=%08x r9=%08x  r8=%08x   rdx=%08x\n"
+	.ascii	"rcx=%08x rax=%08x rdi=%08x rsi=%016x vec=%08x cod=%08x\n"
+	.string	"rip=%08x  cs=%08x rfl=%08x\n"
 
 /*
 ** END OF DEBUGGING CODE PART 2
@@ -316,67 +334,67 @@ ISR(0xfc);	ISR(0xfd);	ISR(0xfe);	ISR(0xff);
 */
 	.globl	__isr_stub_table
 __isr_stub_table:
-	.long	__isr_0x00, __isr_0x01, __isr_0x02, __isr_0x03
-	.long	__isr_0x04, __isr_0x05, __isr_0x06, __isr_0x07
-	.long	__isr_0x08, __isr_0x09, __isr_0x0a, __isr_0x0b
-	.long	__isr_0x0c, __isr_0x0d, __isr_0x0e, __isr_0x0f
-	.long	__isr_0x10, __isr_0x11, __isr_0x12, __isr_0x13
-	.long	__isr_0x14, __isr_0x15, __isr_0x16, __isr_0x17
-	.long	__isr_0x18, __isr_0x19, __isr_0x1a, __isr_0x1b
-	.long	__isr_0x1c, __isr_0x1d, __isr_0x1e, __isr_0x1f
-	.long	__isr_0x20, __isr_0x21, __isr_0x22, __isr_0x23
-	.long	__isr_0x24, __isr_0x25, __isr_0x26, __isr_0x27
-	.long	__isr_0x28, __isr_0x29, __isr_0x2a, __isr_0x2b
-	.long	__isr_0x2c, __isr_0x2d, __isr_0x2e, __isr_0x2f
-	.long	__isr_0x30, __isr_0x31, __isr_0x32, __isr_0x33
-	.long	__isr_0x34, __isr_0x35, __isr_0x36, __isr_0x37
-	.long	__isr_0x38, __isr_0x39, __isr_0x3a, __isr_0x3b
-	.long	__isr_0x3c, __isr_0x3d, __isr_0x3e, __isr_0x3f
-	.long	__isr_0x40, __isr_0x41, __isr_0x42, __isr_0x43
-	.long	__isr_0x44, __isr_0x45, __isr_0x46, __isr_0x47
-	.long	__isr_0x48, __isr_0x49, __isr_0x4a, __isr_0x4b
-	.long	__isr_0x4c, __isr_0x4d, __isr_0x4e, __isr_0x4f
-	.long	__isr_0x50, __isr_0x51, __isr_0x52, __isr_0x53
-	.long	__isr_0x54, __isr_0x55, __isr_0x56, __isr_0x57
-	.long	__isr_0x58, __isr_0x59, __isr_0x5a, __isr_0x5b
-	.long	__isr_0x5c, __isr_0x5d, __isr_0x5e, __isr_0x5f
-	.long	__isr_0x60, __isr_0x61, __isr_0x62, __isr_0x63
-	.long	__isr_0x64, __isr_0x65, __isr_0x66, __isr_0x67
-	.long	__isr_0x68, __isr_0x69, __isr_0x6a, __isr_0x6b
-	.long	__isr_0x6c, __isr_0x6d, __isr_0x6e, __isr_0x6f
-	.long	__isr_0x70, __isr_0x71, __isr_0x72, __isr_0x73
-	.long	__isr_0x74, __isr_0x75, __isr_0x76, __isr_0x77
-	.long	__isr_0x78, __isr_0x79, __isr_0x7a, __isr_0x7b
-	.long	__isr_0x7c, __isr_0x7d, __isr_0x7e, __isr_0x7f
-	.long	__isr_0x80, __isr_0x81, __isr_0x82, __isr_0x83
-	.long	__isr_0x84, __isr_0x85, __isr_0x86, __isr_0x87
-	.long	__isr_0x88, __isr_0x89, __isr_0x8a, __isr_0x8b
-	.long	__isr_0x8c, __isr_0x8d, __isr_0x8e, __isr_0x8f
-	.long	__isr_0x90, __isr_0x91, __isr_0x92, __isr_0x93
-	.long	__isr_0x94, __isr_0x95, __isr_0x96, __isr_0x97
-	.long	__isr_0x98, __isr_0x99, __isr_0x9a, __isr_0x9b
-	.long	__isr_0x9c, __isr_0x9d, __isr_0x9e, __isr_0x9f
-	.long	__isr_0xa0, __isr_0xa1, __isr_0xa2, __isr_0xa3
-	.long	__isr_0xa4, __isr_0xa5, __isr_0xa6, __isr_0xa7
-	.long	__isr_0xa8, __isr_0xa9, __isr_0xaa, __isr_0xab
-	.long	__isr_0xac, __isr_0xad, __isr_0xae, __isr_0xaf
-	.long	__isr_0xb0, __isr_0xb1, __isr_0xb2, __isr_0xb3
-	.long	__isr_0xb4, __isr_0xb5, __isr_0xb6, __isr_0xb7
-	.long	__isr_0xb8, __isr_0xb9, __isr_0xba, __isr_0xbb
-	.long	__isr_0xbc, __isr_0xbd, __isr_0xbe, __isr_0xbf
-	.long	__isr_0xc0, __isr_0xc1, __isr_0xc2, __isr_0xc3
-	.long	__isr_0xc4, __isr_0xc5, __isr_0xc6, __isr_0xc7
-	.long	__isr_0xc8, __isr_0xc9, __isr_0xca, __isr_0xcb
-	.long	__isr_0xcc, __isr_0xcd, __isr_0xce, __isr_0xcf
-	.long	__isr_0xd0, __isr_0xd1, __isr_0xd2, __isr_0xd3
-	.long	__isr_0xd4, __isr_0xd5, __isr_0xd6, __isr_0xd7
-	.long	__isr_0xd8, __isr_0xd9, __isr_0xda, __isr_0xdb
-	.long	__isr_0xdc, __isr_0xdd, __isr_0xde, __isr_0xdf
-	.long	__isr_0xe0, __isr_0xe1, __isr_0xe2, __isr_0xe3
-	.long	__isr_0xe4, __isr_0xe5, __isr_0xe6, __isr_0xe7
-	.long	__isr_0xe8, __isr_0xe9, __isr_0xea, __isr_0xeb
-	.long	__isr_0xec, __isr_0xed, __isr_0xee, __isr_0xef
-	.long	__isr_0xf0, __isr_0xf1, __isr_0xf2, __isr_0xf3
-	.long	__isr_0xf4, __isr_0xf5, __isr_0xf6, __isr_0xf7
-	.long	__isr_0xf8, __isr_0xf9, __isr_0xfa, __isr_0xfb
-	.long	__isr_0xfc, __isr_0xfd, __isr_0xfe, __isr_0xff
+	.quad	__isr_0x00, __isr_0x01, __isr_0x02, __isr_0x03
+	.quad	__isr_0x04, __isr_0x05, __isr_0x06, __isr_0x07
+	.quad	__isr_0x08, __isr_0x09, __isr_0x0a, __isr_0x0b
+	.quad	__isr_0x0c, __isr_0x0d, __isr_0x0e, __isr_0x0f
+	.quad	__isr_0x10, __isr_0x11, __isr_0x12, __isr_0x13
+	.quad	__isr_0x14, __isr_0x15, __isr_0x16, __isr_0x17
+	.quad	__isr_0x18, __isr_0x19, __isr_0x1a, __isr_0x1b
+	.quad	__isr_0x1c, __isr_0x1d, __isr_0x1e, __isr_0x1f
+	.quad	__isr_0x20, __isr_0x21, __isr_0x22, __isr_0x23
+	.quad	__isr_0x24, __isr_0x25, __isr_0x26, __isr_0x27
+	.quad	__isr_0x28, __isr_0x29, __isr_0x2a, __isr_0x2b
+	.quad	__isr_0x2c, __isr_0x2d, __isr_0x2e, __isr_0x2f
+	.quad	__isr_0x30, __isr_0x31, __isr_0x32, __isr_0x33
+	.quad	__isr_0x34, __isr_0x35, __isr_0x36, __isr_0x37
+	.quad	__isr_0x38, __isr_0x39, __isr_0x3a, __isr_0x3b
+	.quad	__isr_0x3c, __isr_0x3d, __isr_0x3e, __isr_0x3f
+	.quad	__isr_0x40, __isr_0x41, __isr_0x42, __isr_0x43
+	.quad	__isr_0x44, __isr_0x45, __isr_0x46, __isr_0x47
+	.quad	__isr_0x48, __isr_0x49, __isr_0x4a, __isr_0x4b
+	.quad	__isr_0x4c, __isr_0x4d, __isr_0x4e, __isr_0x4f
+	.quad	__isr_0x50, __isr_0x51, __isr_0x52, __isr_0x53
+	.quad	__isr_0x54, __isr_0x55, __isr_0x56, __isr_0x57
+	.quad	__isr_0x58, __isr_0x59, __isr_0x5a, __isr_0x5b
+	.quad	__isr_0x5c, __isr_0x5d, __isr_0x5e, __isr_0x5f
+	.quad	__isr_0x60, __isr_0x61, __isr_0x62, __isr_0x63
+	.quad	__isr_0x64, __isr_0x65, __isr_0x66, __isr_0x67
+	.quad	__isr_0x68, __isr_0x69, __isr_0x6a, __isr_0x6b
+	.quad	__isr_0x6c, __isr_0x6d, __isr_0x6e, __isr_0x6f
+	.quad	__isr_0x70, __isr_0x71, __isr_0x72, __isr_0x73
+	.quad	__isr_0x74, __isr_0x75, __isr_0x76, __isr_0x77
+	.quad	__isr_0x78, __isr_0x79, __isr_0x7a, __isr_0x7b
+	.quad	__isr_0x7c, __isr_0x7d, __isr_0x7e, __isr_0x7f
+	.quad	__isr_0x80, __isr_0x81, __isr_0x82, __isr_0x83
+	.quad	__isr_0x84, __isr_0x85, __isr_0x86, __isr_0x87
+	.quad	__isr_0x88, __isr_0x89, __isr_0x8a, __isr_0x8b
+	.quad	__isr_0x8c, __isr_0x8d, __isr_0x8e, __isr_0x8f
+	.quad	__isr_0x90, __isr_0x91, __isr_0x92, __isr_0x93
+	.quad	__isr_0x94, __isr_0x95, __isr_0x96, __isr_0x97
+	.quad	__isr_0x98, __isr_0x99, __isr_0x9a, __isr_0x9b
+	.quad	__isr_0x9c, __isr_0x9d, __isr_0x9e, __isr_0x9f
+	.quad	__isr_0xa0, __isr_0xa1, __isr_0xa2, __isr_0xa3
+	.quad	__isr_0xa4, __isr_0xa5, __isr_0xa6, __isr_0xa7
+	.quad	__isr_0xa8, __isr_0xa9, __isr_0xaa, __isr_0xab
+	.quad	__isr_0xac, __isr_0xad, __isr_0xae, __isr_0xaf
+	.quad	__isr_0xb0, __isr_0xb1, __isr_0xb2, __isr_0xb3
+	.quad	__isr_0xb4, __isr_0xb5, __isr_0xb6, __isr_0xb7
+	.quad	__isr_0xb8, __isr_0xb9, __isr_0xba, __isr_0xbb
+	.quad	__isr_0xbc, __isr_0xbd, __isr_0xbe, __isr_0xbf
+	.quad	__isr_0xc0, __isr_0xc1, __isr_0xc2, __isr_0xc3
+	.quad	__isr_0xc4, __isr_0xc5, __isr_0xc6, __isr_0xc7
+	.quad	__isr_0xc8, __isr_0xc9, __isr_0xca, __isr_0xcb
+	.quad	__isr_0xcc, __isr_0xcd, __isr_0xce, __isr_0xcf
+	.quad	__isr_0xd0, __isr_0xd1, __isr_0xd2, __isr_0xd3
+	.quad	__isr_0xd4, __isr_0xd5, __isr_0xd6, __isr_0xd7
+	.quad	__isr_0xd8, __isr_0xd9, __isr_0xda, __isr_0xdb
+	.quad	__isr_0xdc, __isr_0xdd, __isr_0xde, __isr_0xdf
+	.quad	__isr_0xe0, __isr_0xe1, __isr_0xe2, __isr_0xe3
+	.quad	__isr_0xe4, __isr_0xe5, __isr_0xe6, __isr_0xe7
+	.quad	__isr_0xe8, __isr_0xe9, __isr_0xea, __isr_0xeb
+	.quad	__isr_0xec, __isr_0xed, __isr_0xee, __isr_0xef
+	.quad	__isr_0xf0, __isr_0xf1, __isr_0xf2, __isr_0xf3
+	.quad	__isr_0xf4, __isr_0xf5, __isr_0xf6, __isr_0xf7
+	.quad	__isr_0xf8, __isr_0xf9, __isr_0xfa, __isr_0xfb
+	.quad	__isr_0xfc, __isr_0xfd, __isr_0xfe, __isr_0xff

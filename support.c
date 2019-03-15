@@ -37,10 +37,12 @@ void ( *__isr_table[ 256 ] )( int vector, int code );
 ** Description:	Format of an IDT entry.
 */
 typedef struct	{
-	short	offset_15_0;
-	short	segment_selector;
-	short	flags;
-	short	offset_31_16;
+	uint16_t	offset_15_0;
+	uint16_t	segment_selector;
+	uint16_t	flags;
+	uint16_t	offset_31_16;
+	uint32_t	offset_32_63;
+	uint32_t	zero;
 } IDT_Gate;
 
 /*
@@ -179,10 +181,13 @@ static void init_pic( void ){
 static void set_idt_entry( int entry, void ( *handler )( void ) ){
 	IDT_Gate *g = (IDT_Gate *)IDT_ADDRESS + entry;
 
-	g->offset_15_0 = (int)handler & 0xffff;
-	g->segment_selector = 0x0010;
+	g->offset_15_0 = (uint64_t)handler & 0xffff;
+	g->segment_selector = 0x0008;
 	g->flags = IDT_PRESENT | IDT_DPL_0 | IDT_INT32_GATE;
-	g->offset_31_16 = (int)handler >> 16 & 0xffff;
+	g->offset_31_16 = (uint64_t)handler >> 16 & 0xffff;
+	g->offset_32_63 = (uint64_t)handler >> 32 & 0xffffffff;
+	g->zero = 0x00000000;
+
 }
 
 

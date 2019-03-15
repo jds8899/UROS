@@ -48,7 +48,7 @@
 //
 // IF THE PARAMETER PASSING MECHANISM CHANGES, SO MUST THIS
 
-#define	ARG(pcb,n)	( ( (uint32_t *) (((pcb)->context) + 1) ) [(n)] )
+#define	ARG(pcb,n)	( ( (uint64_t *) (((pcb)->context) + 1) ) [(n)] )
 
 /*
 ** Types
@@ -94,24 +94,24 @@ enum e_states {
 ///
 
 typedef struct context {
-   uint32_t ss;
-   uint32_t gs;
-   uint32_t fs;
-   uint32_t es;
-   uint32_t ds;
-   uint32_t edi;
-   uint32_t esi;
-   uint32_t ebp;
-   uint32_t esp;
-   uint32_t ebx;
-   uint32_t edx;
-   uint32_t ecx;
-   uint32_t eax;
-   uint32_t vector;
-   uint32_t code;
-   uint32_t eip;
-   uint32_t cs;
-   uint32_t eflags;
+   uint64_t ss;
+   uint64_t gs;
+   uint64_t fs;
+   uint64_t es;
+   uint64_t ds;
+   uint64_t rdi;
+   uint64_t rsi;
+   uint64_t rbp;
+   uint64_t rsp;
+   uint64_t rbx;
+   uint64_t rdx;
+   uint64_t rcx;
+   uint64_t rax;
+   uint64_t vector;
+   uint64_t code;
+   uint64_t eip;
+   uint64_t cs;
+   uint64_t eflags;
 } context_t;
 
 // include these here after the context definition
@@ -126,9 +126,11 @@ typedef struct context {
 ///
 
 typedef struct st_pcb {
-   // 32-bit items
+   // 64-bit items
    context_t *context;		// context save area pointer
    stack_t *stack;		// per-process runtime stack
+
+   // 32-bit items
    uint32_t event;		// event indicator for waiting processes
    int32_t exitstatus;		// exit status for zombies
 

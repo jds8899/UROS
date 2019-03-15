@@ -57,14 +57,14 @@ void _put_char_or_code( int ch );
 **
 ** usage:  _kmemclr( buffer, length, value )
 */
-void _kmemset( register uint8_t *buf, register uint32_t len, register uint8_t value );
+void _kmemset( register uint8_t *buf, register uint64_t len, register uint8_t value );
 
 /*
 ** _kmemclr - initialize all bytes of a block of memory to zero
 **
 ** usage:  _kmemclr( buffer, length )
 */
-void _kmemclr( register uint8_t *buf, register uint32_t len );
+void _kmemclr( register uint8_t *buf, register uint64_t len );
 
 /*
 ** _kmemcpy - copy a block from one place to another
@@ -73,7 +73,7 @@ void _kmemclr( register uint8_t *buf, register uint32_t len );
 **
 ** may not correctly deal with overlapping buffers
 */
-void _kmemcpy( register uint8_t *dst, register uint8_t *src, register uint32_t len );
+void _kmemcpy( register uint8_t *dst, register uint8_t *src, register uint64_t len );
 
 /*
 ** _kstrlen - return length of a NUL-terminated string

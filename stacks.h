@@ -21,11 +21,11 @@
 
 // number of 32-bit unsigned integers in a stack
 
-#define	STACK_SIZE_U32	1024
+#define	STACK_SIZE_U64	1024
 
 // total size of a stack
 
-#define	STACK_SIZE	(STACK_SIZE_U32 * sizeof(uint32_t))
+#define	STACK_SIZE	(STACK_SIZE_U64 * sizeof(uint64_t))
 
 #ifndef __SP_ASM__
 
@@ -39,14 +39,14 @@
 
 // stack structure
 
-typedef uint32_t stack_t[STACK_SIZE_U32];
+typedef uint64_t stack_t[STACK_SIZE_U64];
 
 /*
 ** Globals
 */
 
 extern stack_t _system_stack;		// the OS stack
-extern uint32_t *_system_esp;		// the OS %ESP value
+extern uint64_t *_system_esp;		// the OS %RSP value
 
 /*
 ** Prototypes
@@ -81,7 +81,7 @@ void _stk_free( stack_t *stk );
 ** dump the contents of the provided stack, eliding
 ** duplicate lines
 */
-void _stk_dump( const char *msg, stack_t *stack, uint32_t limit );
+void _stk_dump( const char *msg, stack_t *stack, uint64_t limit );
 
 /*
 ** _stk_setup(stack,entry,argv,argc,len)
@@ -90,7 +90,7 @@ void _stk_dump( const char *msg, stack_t *stack, uint32_t limit );
 **
 ** returns a pointer to the context save area in the stack
 */
-context_t *_stk_setup( stack_t *stack, uint32_t entry, char *argv[],
+context_t *_stk_setup( stack_t *stack, uint64_t entry, char *argv[],
       int argc, int len );
 
 #endif

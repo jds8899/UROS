@@ -26,8 +26,8 @@
 
 // parameters related to word size
 
-#define	WORD_SIZE		sizeof(int)
-#define	LOG2_OF_WORD_SIZE	2
+#define	WORD_SIZE		sizeof(long)
+#define	LOG2_OF_WORD_SIZE	3
 
 /*
 ** Name:	adjacent
@@ -38,7 +38,7 @@
 **		the first one.
 */
 #define	adjacent(first,second)	\
-   ( &(first)->info.memory + (first)->length == (int *)(second) )
+   ( &(first)->info.memory + (first)->length == (long *)(second) )
 
 /*
 ** Name:	length_of
@@ -61,7 +61,7 @@
 */
 
 typedef struct st_blkinfo {
-   uint32_t length;		// usable length of this block, in words
+   uint64_t length;		// usable length of this block, in words
    union {
       struct st_blkinfo *next;	// pointer to the next free block
       int memory;		// first word of the block
@@ -90,7 +90,7 @@ extern int _end;	// end of the BSS section - provided by the linker
 ** Description:	Add a block to the free list
 ** Arguments:	Base address of the block and its length in bytes
 */
-static void _add_block( uint32_t base, uint32_t length ) {
+static void _add_block( uint64_t base, uint64_t length ) {
    Blockinfo *block;
 
    /*
@@ -101,12 +101,12 @@ static void _add_block( uint32_t base, uint32_t length ) {
    */
 
    block = (Blockinfo *) base;
-   block->length = (int *) (base + length) - &block->info.memory;
+   block->length = (long *) (base + length) - &block->info.memory;
    block->info.next = NULL;
 
 #ifdef DEBUG_KMALLOC_FREELIST
 c_printf( "## _add_block(%08x,%d): addr %08x len %d\n",
-   base, length, (uint32_t) block, block->length );
+   base, length, (uint64_t) block, block->length );
 #endif
    /*
    ** We maintain the free list in order by address, to simplify
@@ -187,7 +187,7 @@ void _dump_freelist( void ){
    for( block = _freelist; block != NULL; block = block->info.next ){
 
       c_printf( "block=%08x length=%08x (ends at %08x) next=%08x\n",
-          block, block->length, block->length * 4 + 4 + (int)block,
+          block, block->length, block->length * 8 + 8 + (long)block,
           block->info.next );
    }
 
@@ -202,7 +202,7 @@ void _dump_freelist( void ){
 **		caller must not depend on this in any way.  If no memory
 **		is available, NULL is returned.
 */
-void *_kmalloc( uint32_t desired_length ){
+void *_kmalloc( uint64_t desired_length ){
    Blockinfo *block;
    Blockinfo **pointer;
 
@@ -247,10 +247,10 @@ c_printf( ", len -> %d", desired_length );
       ** this one.
       */
 #ifdef DEBUG_KMALLOC
-c_printf( ", got %08x/%d", (uint32_t)block, block->length );
+c_printf( ", got %08x/%d", (uint64_t)block, block->length );
 #endif
       Blockinfo *fragment;
-      int fragment_size;
+      long fragment_size;
 
       fragment_size = sizeof( block->length ) / WORD_SIZE
           + desired_length;
@@ -268,7 +268,7 @@ c_printf( ", got %08x/%d", (uint32_t)block, block->length );
       *pointer = block->info.next;
    }
 #ifdef DEBUG_KMALLOC
-c_printf( ", returns %08x/%d\n", (uint32_t) (&block->info.memory),
+c_printf( ", returns %08x/%d\n", (uint64_t) (&block->info.memory),
    block->length );
 #endif
    return &block->info.memory;
@@ -360,8 +360,8 @@ void _kfree( void *address ){
 */
 
 typedef struct st_MemRegion {
-   uint32_t base[2];	// base address
-   uint32_t length[2];	// region length
+   uint64_t base[2];	// base address
+   uint64_t length[2];	// region length
    uint32_t type;	// type of region
    uint32_t acpi;	// ACPI 3.0 info
 } __attribute__((packed)) region_t;
@@ -390,7 +390,7 @@ typedef struct st_MemRegion {
 **		the list of free memory blocks.
 */
 void _km_init( void ){
-   int32_t entries;
+   int64_t entries;
    region_t *region;
    uint64_t cutoff;
 
@@ -402,7 +402,7 @@ void _km_init( void ){
 
    // set our cutoff point
 
-   cutoff = (uint32_t) &_end;
+   cutoff = (uint64_t) &_end;
 
    // round it up to the next multiple of 0x10000
 
@@ -413,12 +413,12 @@ void _km_init( void ){
 
 #ifdef DEBUG_KMALLOC
    c_printf( "+++ _km_init, _end %08x cutoff %08x\n", 
-      (uint32_t) &_end, (uint32_t) cutoff );
+      (uint64_t) &_end, (uint64_t) cutoff );
 #endif
 
    // if there are no entries, we have nothing to do!
 
-   entries = *((int32_t *) MMAP_ADDRESS);
+   entries = *((int64_t *) MMAP_ADDRESS);
    // c_printf( "%d entries\n", entries );
 
    if( entries < 1 ) {  // note: entries == -1 could occur!
@@ -476,8 +476,8 @@ void _km_init( void ){
       // see if it's below our arbitrary cutoff point
       	
 
-      uint32_t base = region->base[0];
-      uint32_t length = region->length[0];
+      uint64_t base = region->base[0];
+      uint64_t length = region->length[0];
 
       if( base < cutoff ) {
 
@@ -490,7 +490,7 @@ void _km_init( void ){
 
 	 // recalculate the length, starting at our cutoff point
 
-	 uint32_t loss = cutoff - base;
+	 uint64_t loss = cutoff - base;
 
 	 // reset the length and the base address
 	 length -= loss;

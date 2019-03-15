@@ -33,7 +33,7 @@
 */
 
 stack_t _system_stack;		// the OS stack
-uint32_t *_system_esp;		// the OS %ESP value
+uint64_t *_system_rsp;		// the OS %ESP value
 
 /*
 ** PRIVATE FUNCTIONS
@@ -60,7 +60,7 @@ void _stk_init( void ) {
    ** to the next-to-last word in the stack.
    */
 
-   _system_esp = ((uint32_t *) ( (&_system_stack) + 1)) - 2;
+   _system_rsp = ((uint64_t *) ( (&_system_stack) + 1)) - 2;
    
 }
 
@@ -234,19 +234,19 @@ void _stk_dump( const char *msg, stack_t *stack, uint32_t limit ) {
 **
 ** returns a pointer to the context save area in the stack
 */
-context_t *_stk_setup( stack_t *stack, uint32_t entry, char *argv[],
+context_t *_stk_setup( stack_t *stack, uint64_t entry, char *argv[],
       int argc, int len ) {
 
-   uint32_t *ptr;
+   uint64_t *ptr;
    context_t *context;
 
 #ifdef TRACE_STACK_SETUP
-   c_printf( "== _stk_setup(%08x,%08x,%08x,%d,%d)\n", (uint32_t) stack,
-      entry, (uint32_t) argv, argc, len );
+   c_printf( "== _stk_setup(%08x,%08x,%08x,%d,%d)\n", (uint64_t) stack,
+      entry, (uint64_t) argv, argc, len );
    if( argv != NULL ) {
-      c_printf( "== argv:  [0] %08x", (uint32_t)argv[0] );
+      c_printf( "== argv:  [0] %08x", (uint64_t)argv[0] );
       if( argv[0] != NULL ) c_printf( " '%s'", argv[0] );
-      c_printf( ", [1] %08x", (uint32_t)argv[1] );
+      c_printf( ", [1] %08x", (uint64_t)argv[1] );
       if( argv[1] != NULL ) c_printf( " '%s'", argv[1] );
       c_putchar( '\n' );
    }
@@ -295,7 +295,7 @@ context_t *_stk_setup( stack_t *stack, uint32_t entry, char *argv[],
 
    // find the address following the stack
 
-   ptr = (uint32_t *) (stack + 1);
+   ptr = (uint64_t *) (stack + 1);
 
    // assign the dummy "last word"
 
@@ -304,7 +304,7 @@ context_t *_stk_setup( stack_t *stack, uint32_t entry, char *argv[],
 #ifdef TRACE_STACK_SETUP
    if( argv != NULL ) {
       c_printf( "== post-dummy argv %08x  [0] %08x [1] %08x\n",
-         (uint32_t)argv, (uint32_t)argv[0], (uint32_t)argv[1] );
+         (uint64_t)argv, (uint64_t)argv[0], (uint64_t)argv[1] );
    }
 #endif
 
@@ -335,13 +335,13 @@ context_t *_stk_setup( stack_t *stack, uint32_t entry, char *argv[],
    char *save = cptr;
 
 #ifdef TRACE_STACK_SETUP
-   c_printf( "== args @ %08x: ", (uint32_t) cptr );
+   c_printf( "== args @ %08x: ", (uint64_t) cptr );
 #endif
    for( int i = 0; i < argc; ++i ) {
       _kstrcpy( cptr, argv[i] );  // copy the string
       args[i] = cptr;             // remember where it went
 #ifdef TRACE_STACK_SETUP
-      c_printf( " '%s' -> %08x", cptr, (uint32_t) cptr );
+      c_printf( " '%s' -> %08x", cptr, (uint64_t) cptr );
 #endif
       cptr += _kstrlen( argv[i] ) + 1;  // move past it
    }
@@ -357,52 +357,52 @@ context_t *_stk_setup( stack_t *stack, uint32_t entry, char *argv[],
    */
 
 #ifdef TRACE_STACK_SETUP
-   c_printf( "\n== orig cptr %08x", (uint32_t) save );
+   c_printf( "\n== orig cptr %08x", (uint64_t) save );
 #endif
-   while( ((uint32_t) save) & 3 ) {
+   while( ((uint64_t) save) & 3 ) {
       --save;
    }
 #ifdef TRACE_STACK_SETUP
-   c_printf( " rounded %08x\n", (uint32_t) save );
+   c_printf( " rounded %08x\n", (uint64_t) save );
 #endif
 
    // now, copy in the argv entries in reverse order, starting with the NULL
 
-   ptr = (uint32_t *) save;
+   ptr = (uint64_t *) save;
 
    for( int i = argc; i >= 0; --i ) {
-      *--ptr = (uint32_t) args[i];
+      *--ptr = (uint64_t) args[i];
 #ifdef TRACE_STACK_SETUP
       c_printf( ", av[%d] %08x to %08x", i, (uint32_t) args[i],
-         (uint32_t) ptr );
+         (uint64_t) ptr );
 #endif
    }
 
    // remember the argv[0] address
 
-   uint32_t *tmp = ptr;
+   uint64_t *tmp = ptr;
 
    // now push argv and then argc
 
-   *--ptr = (uint32_t) tmp;
+   *--ptr = (uint64_t) tmp;
 #ifdef TRACE_STACK_SETUP
-   c_printf( "\n== argv %08x to %08x, ", (uint32_t) tmp, (uint32_t) ptr );
+   c_printf( "\n== argv %08x to %08x, ", (uint64_t) tmp, (uint64_t) ptr );
 #endif
    *--ptr = argc;
 #ifdef TRACE_STACK_SETUP
-   c_printf( "argc %d to %08x\n", argc, (uint32_t) ptr );
+   c_printf( "argc %d to %08x\n", argc, (uint64_t) ptr );
 #endif
 
    // push the "return address"
-   *--ptr = (uint32_t) do_exit;
+   *--ptr = (uint64_t) do_exit;
 
    // now, set up the process context
    context = ((context_t *) ptr) - 1;
 
    // initialize all the registers that should be non-zero
    context->eflags = DEFAULT_EFLAGS;
-   context->eip = entry;
-   context->ebp = 0;  // end of EBP stack frame chain
+   context->rip = entry;
+   context->rbp = 0;  // end of EBP stack frame chain
    context->cs = GDT_CODE;
    context->ss = GDT_STACK;
    context->ds = GDT_DATA;

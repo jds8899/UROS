@@ -18,9 +18,6 @@
 
 _long_mode_init:
 	cli
-	//xor		%ax, %ax		// Make sure es and ds are 0
-	//mov		%eax, %ds		// For later copy operations
-	//mov		%eax, %es
 	call	check_cpuid
 	call	check_long_mode
 
@@ -129,7 +126,7 @@ long_mode_entry:
 	mov		%ax, %ss
 	movq	$0x2f592f412f4b2f4f, %rax
 	movq	%rax, (0xb8000)
-	call	c_io_init
+	//call	c_io_init
 	//call	c_clearscreen
 	//mov		$0x700000000, %rbx
 	hlt
@@ -155,23 +152,18 @@ kill:
 ** data from the beginning of the segment (0000:0000).
 */
 move_gdt:
-	//mov		$start_gdt, %esi
-	//mov		$GDT64_ADDRESS, %edi
-	//movl	$gdt_len, %ecx
-	//cld
-	//rep	movsb
-	movl    $0x00010000, %eax
-	movl    %eax, 0x1504
 	movl    $0x0000FFFF, %eax
-	movl    %eax, 0x1500
+	movl    %eax, GDT64_ADDRESS
+	movl    $0x00010000, %eax
+	movl    %eax, GDT64_ADDRESS + 0x4
+	movl    $0x00000000, %eax
+	movl    %eax, GDT64_ADDRESS + 0x8
 	movl    $0x00209800, %eax
-	movl    %eax, 0x150c
+	movl    %eax, GDT64_ADDRESS + 0xc
 	movl    $0x00000000, %eax
-	movl    %eax, 0x1508
+	movl    %eax, GDT64_ADDRESS + 0x10
 	movl    $0x00009000, %eax
-	movl    %eax, 0x1514
-	movl    $0x00000000, %eax
-	movl    %eax, 0x1510
+	movl    %eax, GDT64_ADDRESS + 0x14
 	ret
 
 gdt_48:

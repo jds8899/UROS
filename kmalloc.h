@@ -67,7 +67,7 @@ void _dump_freelist( void );
 ** Returns:	A pointer to a block of memory at least that large (or
 **		NULL if no block was found)
 */
-void *_kmalloc( uint32_t desired_length );
+void *_kmalloc( uint64_t desired_length );
 
 /*
 ** Name:	_kfree

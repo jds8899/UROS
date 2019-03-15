@@ -20,14 +20,14 @@ bootstrap.S or bootstrap.h, its name is also given.
 	-----------------------
 	|                     | 0x00400
 	-----------------------
-	| GDT                 | 0x00500  GDT_ADDRESS
-	|   1024 x 8 bytes    |
+	| GDT                 | 0x00900  GDT_ADDRESS
+	|   1024 x 8 bytes    | 0x01000  GDT64_ADDRESS
 	|   (8192, 0x2000)    |
 	|                     |
 	<     . . .           >
 	|                     |
 	-----------------------
-	| IDT                 | 0x02500  IDT_ADDRESS
+	| IDT                 | 0x01100  IDT_ADDRESS
 	|   256 x 8 bytes     |
 	|   (2048, 0x800)     |
 	|                     |
@@ -42,10 +42,10 @@ bootstrap.S or bootstrap.h, its name is also given.
 	| Mmap data           | 0x02D00  MMAP_ADDRESS
 	|                     |
 	|                     |
-	|                     | 0x03000  RMTEXT_ADDRESS
-	|                     |
-	<     . . .           >
-	|                     |
+	|                     | 0x03000  PMTL4
+	|                     | 0x04000  PMTL3
+	<     . . .           > 0x05000  PMTL2
+	|                     | 0x06000  PMTL1
 	-----------------------
 	| Bootstrap sector 1  | 0x07c00  BOOT_ADDRESS
 	|                     |

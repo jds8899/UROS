@@ -238,7 +238,7 @@ void _pcb_cleanup( pcb_t *pcb ) {
 */
 void _pcb_dump( const char *msg, pcb_t *pcb ) {
 
-   c_printf( "%s @ %08x: ", msg, (uint32_t) pcb );
+   c_printf( "%s @ %08x: ", msg, (uint64_t) pcb );
    if( pcb == NULL ) {
       c_puts( " NULL???\n" );
       return;
@@ -257,7 +257,7 @@ void _pcb_dump( const char *msg, pcb_t *pcb ) {
              pcb->children, pcb->prio, pcb->ticks );
 
    c_printf( " context %08x stack %08x\n",
-             (uint32_t) pcb->context, (uint32_t) pcb->stack );
+             (uint64_t) pcb->context, (uint64_t) pcb->stack );
 }
 
 /*
@@ -267,7 +267,7 @@ void _pcb_dump( const char *msg, pcb_t *pcb ) {
 */
 void _context_dump( const char *msg, context_t *context ) {
 
-   c_printf( "%s @ %08x: ", msg, (uint32_t) context );
+   c_printf( "%s @ %08x: ", msg, (uint64_t) context );
    if( context == NULL ) {
       c_puts( " NULL???\n" );
       return;
@@ -276,11 +276,11 @@ void _context_dump( const char *msg, context_t *context ) {
    c_printf( "\n     ss %08x  gs %08x  fs %08x  es %08x\n",
              context->ss, context->gs, context->fs, context->es );
    c_printf( "     ds %08x edi %08x esi %08x ebp %08x\n",
-             context->ds, context->edi, context->esi, context->ebp );
+             context->ds, context->rdi, context->rsi, context->rbp );
    c_printf( "    esp %08x ebx %08x edx %08x ecx %08x\n",
-             context->esp, context->ebx, context->edx, context->ecx );
+             context->rsp, context->rbx, context->rdx, context->rcx );
    c_printf( "    eax %08x vec %08x cod %08x eip %08x\n",
-             context->eax, context->vector, context->code, context->eip );
+             context->rax, context->vector, context->code, context->rip );
    c_printf( "     cs %08x efl %08x\n", context->cs, context->eflags );
 }
 
@@ -319,7 +319,7 @@ void _active_dump( const char *msg, int all ) {
 	 // do we want more info?
          if( all ) {
 	    c_printf( " stk %08x len %d\n", (uint32_t) _active[i]->stack,
-	       *(((uint32_t *)_active[i]->stack)-1) );
+	       *(((uint64_t *)_active[i]->stack)-1) );
 	 }
 
 	 // one more non-empty slot
