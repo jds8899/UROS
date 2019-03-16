@@ -126,7 +126,9 @@ long_mode_entry:
 	mov		%ax, %ss
 	movq	$0x2f592f412f4b2f4f, %rax
 	movq	%rax, (0xb8000)
-	//call	c_io_init
+	movq	$TARGET_STACK, %rbp	/* set up the system frame pointer */
+	movq	%rbp, %rsp	/* and stack pointer */
+	call	c_io_init
 	//call	c_clearscreen
 	//mov		$0x700000000, %rbx
 	hlt

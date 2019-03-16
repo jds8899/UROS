@@ -121,7 +121,7 @@ LDFLAGS = -melf_x86_64
 	$(CC) $(CFLAGS) -S $*.c
 
 .S.s:
-	$(CPP) $(CPPFLAGS) -o $*.s $*.S
+	$(CPP) $(CPPFLAGS) -g -o $*.s $*.S
 
 .S.o:
 	$(CPP) $(CPPFLAGS) -o $*.s $*.S
@@ -133,7 +133,7 @@ LDFLAGS = -melf_x86_64
 	$(LD) $(LDFLAGS) -Ttext 0x0 -s --oformat binary -e begtext -o $*.b $*.o
 
 .c.o:
-	$(CC) $(CFLAGS) -c $*.c
+	$(CC) $(CFLAGS) -g -c $*.c
 
 # Binary/source file for system bootstrap code
 
