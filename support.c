@@ -17,6 +17,7 @@
 #include "c_io.h"
 #include "x86arch.h"
 #include "bootstrap.h"
+#include "common.h"
 
 /*
 ** Global variables and local data types.
@@ -61,7 +62,6 @@ typedef struct	{
 **		to ever occur.  It handles them by calling panic.
 */
 #ifdef DEBUG_UNEXP_INTS
-#include "common.h"
 #include "pcbs.h"
 #include "queues.h"
 #include "stacks.h"
@@ -80,6 +80,8 @@ static void __default_unexpected_handler( int vector, int code ){
 		_context_dump( "Faulting context", ctxt );
 	}
 #endif
+	c_clearscreen();
+	c_printf("vector: 0x%016x\ncode:   0x%016x",vector, code);
 	__panic( "Unexpected interrupt" );
 }
 
@@ -106,6 +108,8 @@ static void __default_expected_handler( int vector, int code ){
 		** code above.  If we get down here, the isr table may
 		** have been corrupted.  Print message and don't return.
 		*/
+		c_clearscreen();
+		c_printf("vector: %x\ncode: %x",vector, code);
 		__panic( "Unexpected \"expected\" interrupt!" );
 	}
 }
@@ -184,8 +188,8 @@ static void set_idt_entry( int entry, void ( *handler )( void ) ){
 	g->offset_15_0 = (uint64_t)handler & 0xffff;
 	g->segment_selector = 0x0008;
 	g->flags = IDT_PRESENT | IDT_DPL_0 | IDT_INT32_GATE;
-	g->offset_31_16 = (uint64_t)handler >> 16 & 0xffff;
-	g->offset_32_63 = (uint64_t)handler >> 32 & 0xffffffff;
+	g->offset_31_16 = ((uint64_t)handler >> 16) & 0xffff;
+	g->offset_32_63 = ((uint64_t)handler >> 32) & 0xffffffff;
 	g->zero = 0x00000000;
 
 }

@@ -64,7 +64,7 @@ USR_OBJS = $(USR_C_OBJ) $(USR_S_OBJ)
 #
 MAIN_OPTIONS = -DSP_OS_CONFIG -DCLEAR_BSS_SEGMENT
 #MAIN_OPTIONS = -DSP_OS_CONFIG -DCLEAR_BSS_SEGMENT -DDUMP_QUEUES
-DBG_OPTIONS = -DSANITY_CHECK -DISR_DEBUGGING_CODE -DDEBUG_UNEXP_INTS
+DBG_OPTIONS = -DSANITY_CHECK -DISR_DEBUGGING_CODE #-DDEBUG_UNEXP_INTS
 USER_OPTIONS = $(MAIN_OPTIONS) $(DBG_OPTIONS)
 
 #
@@ -142,13 +142,13 @@ BOOT_SRC = bootstrap.S
 
 # Assembly language object/source files
 
-FMK_S_OBJ = long_mode.o startup.o $(U_S_OBJ)
-FMK_S_SRC = long_mode.S	startup.S $(U_S_SRC)
+FMK_S_OBJ = long_mode.o startup.o isr_stubs.o $(U_S_OBJ)
+FMK_S_SRC = long_mode.S	startup.S isr_stubs.S $(U_S_SRC)
 
 # C object/source files
 
-FMK_C_OBJ =	c_io.o $(U_C_OBJ)
-FMK_C_SRC =	c_io.c $(U_C_SRC)
+FMK_C_OBJ =	c_io.o support.o $(U_C_OBJ)
+FMK_C_SRC =	c_io.c support.c $(U_C_SRC)
 
 # Collections of files
 
@@ -174,10 +174,10 @@ prog.out: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o prog.out $(OBJECTS)
 
 prog.o:	$(OBJECTS)
-	$(LD) $(LDFLAGS) -o prog.o -Ttext 0x10000 -Tdata 0x12000 -Tbss 0x13000 $(OBJECTS) $(U_LIBS)
+	$(LD) $(LDFLAGS) -o prog.o -Ttext 0x10000 -Tdata 0x15000 -Tbss 0x20000 $(OBJECTS) $(U_LIBS)
 
 prog.b:	prog.o
-	$(LD) $(LDFLAGS) -o prog.b -s --oformat binary -Ttext 0x10000 -Tdata 0x12000 -Tbss 0x13000 prog.o
+	$(LD) $(LDFLAGS) -o prog.b -s --oformat binary -Ttext 0x10000 -Tdata 0x15000 -Tbss 0x20000 prog.o
 
 #
 # Targets for copying bootable image onto boot devices

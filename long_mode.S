@@ -114,6 +114,11 @@ gdt_setup:
 	.word	GDT64_CODE
 
 	.code64
+
+idt_setup:
+	lidt	idt_48
+	ret
+
 long_mode_entry:
 	cli
 	xor		%eax, %eax
@@ -128,7 +133,13 @@ long_mode_entry:
 	movq	%rax, (0xb8000)
 	movq	$TARGET_STACK, %rbp	/* set up the system frame pointer */
 	movq	%rbp, %rsp	/* and stack pointer */
+	call	idt_setup
+	call	__init_interrupts
 	call	c_io_init
+	//sti
+	nop
+	call	c_getchar
+	call	c_clearscreen
 	//call	c_clearscreen
 	//mov		$0x700000000, %rbx
 	hlt
@@ -164,13 +175,16 @@ move_gdt:
 	movl    %eax, GDT64_ADDRESS + 0xc
 	movl    $0x00000000, %eax
 	movl    %eax, GDT64_ADDRESS + 0x10
-	movl    $0x00009000, %eax
+	movl    $0x00009200, %eax
 	movl    %eax, GDT64_ADDRESS + 0x14
 	ret
 
 gdt_48:
 	.word	0x18
 	.quad	GDT64_ADDRESS
+idt_48:
+	.word	0x1000		/* 256 interrupts */
+	.quad	IDT_ADDRESS
 
 /*
 ** The GDT

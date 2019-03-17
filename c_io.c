@@ -723,13 +723,10 @@ void c_io_init( void ){
 	curr_y = min_y;
 	curr_x = min_x;
 	__c_setcursor();
-	c_clearscreen();
-	c_printf_at(0,0,"%d, %d\n%s\n%d, %d, %d, %d", 11, 12, "test", 10, 9, 8, 7);
-for(;;){}
 	/*
 	** Set up the interrupt handler for the keyboard
 	*/
-	//__install_isr( INT_VEC_KEYBOARD, __c_keyboard_isr );
+	__install_isr( INT_VEC_KEYBOARD, __c_keyboard_isr );
 }
 
 #ifdef SA_DEBUG
