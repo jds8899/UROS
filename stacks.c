@@ -134,11 +134,11 @@ void _stk_free( stack_t *stack ) {
 #define	CBUFSZ		24
 
 void _stk_dump( const char *msg, stack_t *stack, uint32_t limit ) {
-   int words = STACK_SIZE_U32;
+   int words = STACK_SIZE_U64;
    int eliding = 0;
    char oldbuf[HBUFSZ], buf[HBUFSZ], cbuf[CBUFSZ];
-   uint32_t addr = (uint32_t ) stack;
-   uint32_t *sp = (uint32_t *) stack;
+   uint64_t addr = (uint64_t ) stack;
+   uint64_t *sp = (uint64_t *) stack;
    char hexdigits[] = "0123456789ABCDEF";
 
    // if a limit was specified, dump only that many words
@@ -146,12 +146,12 @@ void _stk_dump( const char *msg, stack_t *stack, uint32_t limit ) {
    if( limit > 0 ) {
       words = limit;
       if( (words & 0x3) != 0 ) {
-         // round up to a multiple of four
-	 words = (words & 0xfffffffc) + 4;
+         // round up to a multiple of eight
+         words = (words & 0xfffffffffffffff8) + 8;
       }
       // skip to the new starting point
-      sp += (STACK_SIZE_U32 - words);
-      addr = (uint32_t) sp;
+      sp += (STACK_SIZE_U64 - words);
+      addr = (uint64_t) sp;
    }
 
    c_puts( "*** stack" );
@@ -167,43 +167,43 @@ void _stk_dump( const char *msg, stack_t *stack, uint32_t limit ) {
 
       register char *bp = buf;   // start of hex field
       register char *cp = cbuf;  // start of character field
-      uint32_t start_addr = addr;
+      uint64_t start_addr = addr;
 
       // iterate through the words for this line
 
       for( int i = 0; i < 4; ++i ) {
-         register uint32_t curr = *sp++;
-	 register uint32_t data = curr;
+         register uint64_t curr = *sp++;
+         register uint64_t data = curr;
 
-	 // convert the hex representation
+         // convert the hex representation
 
-	 // two spaces before each entry
+         // two spaces before each entry
          *bp++ = ' ';
          *bp++ = ' ';
 
-         for( int j = 0; j < 8; ++j ) {
-            uint32_t value = (data >> 28) & 0xf;
+         for( int j = 0; j < 16; ++j ) {
+            uint64_t value = (data >> 60) & 0xf;
             *bp++ = hexdigits[value];
             data <<= 4;
          }
 
-	 // now, convert the character version
-	 data = curr;
+         // now, convert the character version
+         data = curr;
 
-	 // one space before each entry
-	 *cp++ = ' ';
+         // one space before each entry
+         *cp++ = ' ';
 
-	 for( int j = 0; j < 4; ++j ) {
-	    uint32_t value = (data >> 24) & 0xff;
-	    *cp++ = (value >= ' ' && value < 0x7f) ? (char) value : '.';
-	    data <<= 8;
-	 }
+         for( int j = 0; j < 8; ++j ) {
+	       uint64_t value = (data >> 56) & 0xff;
+	       *cp++ = (value >= ' ' && value < 0x7f) ? (char) value : '.';
+	       data <<= 16;
+         }
       }
       *bp = '\0';
       *cp = '\0';
 
       words -= 4;
-      addr += 16;
+      addr += 32;
 
       // if this line looks like the last one, skip it
 
@@ -215,7 +215,7 @@ void _stk_dump( const char *msg, stack_t *stack, uint32_t limit ) {
       // it's different, so print it
 
       // start with the address
-      c_printf( "%08x%c", start_addr, eliding ? '*' : ' ' );
+      c_printf( "%016x%c", start_addr, eliding ? '*' : ' ' );
       eliding = 0;
 
       // print the words

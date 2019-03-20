@@ -37,7 +37,7 @@
 
 // RET(pcb) -- access return value register in a process context
 
-#define	RET(pcb)	((pcb)->context->eax)
+#define	RET(pcb)	((pcb)->context->rax)
 
 // ARG(pcb,n) -- access argument #n from the indicated process
 //
@@ -94,24 +94,20 @@ enum e_states {
 ///
 
 typedef struct context {
-   uint64_t ss;
-   uint64_t gs;
-   uint64_t fs;
-   uint64_t es;
-   uint64_t ds;
-   uint64_t rdi;
-   uint64_t rsi;
-   uint64_t rbp;
-   uint64_t rsp;
-   uint64_t rbx;
+   uint64_t r11;
+   uint64_t r10;
+   uint64_t r9;
+   uint64_t r8;
    uint64_t rdx;
    uint64_t rcx;
    uint64_t rax;
+   uint64_t rdi;
+   uint64_t rsi;
    uint64_t vector;
    uint64_t code;
    uint64_t rip;
    uint64_t cs;
-   uint64_t eflags;
+   uint64_t rflags;
 } context_t;
 
 // include these here after the context definition

@@ -52,16 +52,18 @@ int main( void ) {
     putchar( '\n');
 
     printf( "Offsets into context_t (%u bytes):\n", sizeof(context) );
+	/*
     printf( "   ss:\t\t%d\n", (char *)&context.ss - (char *)&context );
     printf( "   gs:\t\t%d\n", (char *)&context.gs - (char *)&context );
     printf( "   fs:\t\t%d\n", (char *)&context.fs - (char *)&context );
     printf( "   es:\t\t%d\n", (char *)&context.es - (char *)&context );
     printf( "   ds:\t\t%d\n", (char *)&context.ds - (char *)&context );
+	*/
     printf( "   edi:\t\t%d\n", (char *)&context.rdi - (char *)&context );
     printf( "   esi:\t\t%d\n", (char *)&context.rsi - (char *)&context );
-    printf( "   ebp:\t\t%d\n", (char *)&context.rbp - (char *)&context );
-    printf( "   esp:\t\t%d\n", (char *)&context.rsp - (char *)&context );
-    printf( "   ebx:\t\t%d\n", (char *)&context.rbx - (char *)&context );
+    //printf( "   ebp:\t\t%d\n", (char *)&context.rbp - (char *)&context );
+    //printf( "   esp:\t\t%d\n", (char *)&context.rsp - (char *)&context );
+    //printf( "   ebx:\t\t%d\n", (char *)&context.rbx - (char *)&context );
     printf( "   edx:\t\t%d\n", (char *)&context.rdx - (char *)&context );
     printf( "   ecx:\t\t%d\n", (char *)&context.rcx - (char *)&context );
     printf( "   eax:\t\t%d\n", (char *)&context.rax - (char *)&context );
@@ -69,7 +71,7 @@ int main( void ) {
     printf( "   code:\t%d\n", (char *)&context.code - (char *)&context );
     printf( "   eip:\t\t%d\n", (char *)&context.rip - (char *)&context );
     printf( "   cs:\t\t%d\n", (char *)&context.cs - (char *)&context );
-    printf( "   eflags:\t%d\n",(char *)&context.eflags - (char *)&context);
+    printf( "   eflags:\t%d\n",(char *)&context.rflags - (char *)&context);
     putchar( '\n' );
 
     printf( "Offsets into pcb_t (%u bytes):\n", sizeof(pcb) );

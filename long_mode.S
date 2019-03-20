@@ -136,12 +136,13 @@ long_mode_entry:
 	call	idt_setup
 	call	__init_interrupts
 	call	c_io_init
-	//sti
+	sti
 	nop
-	call	c_getchar
 	call	c_clearscreen
-	//call	c_clearscreen
-	//mov		$0x700000000, %rbx
+end:
+	call	c_getchar
+	jmp		end
+	cli
 	hlt
 
 	.code32

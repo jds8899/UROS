@@ -97,7 +97,7 @@ isr_save:
 /*
 ** Stack contents (all 64-bit quadwords) and offsets from ESP:
 **
-**   R11 R10 R9 R8 RDX RCX RAX RDI RSI vec cod EIP CS EFL
+**   R11 R10 R9 R8 RDX RCX RAX RDI RSI vec cod RIP CS RFL
 **    0   8  16 24 32  40  48  56  64  72  80  88  96 104
 **
 ** Note that the saved ESP is the contents before the PUSHA.

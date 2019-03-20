@@ -121,11 +121,11 @@ LDFLAGS = -melf_x86_64
 	$(CC) $(CFLAGS) -S $*.c
 
 .S.s:
-	$(CPP) $(CPPFLAGS) -g -o $*.s $*.S
+	$(CPP) $(CPPFLAGS) -o $*.s $*.S
 
 .S.o:
 	$(CPP) $(CPPFLAGS) -o $*.s $*.S
-	$(AS) $(ASFLAGS) -o $*.o $*.s -a=$*.lst
+	$(AS) $(ASFLAGS) -g -o $*.o $*.s -a=$*.lst
 	$(RM) -f $*.s
 
 .s.b:
@@ -190,10 +190,10 @@ usb:	usb.image
 	/home/jds/Desktop/dcopy usb.image
 
 qemu:   usb.image
-	qemu-system-x86_64 -hdb usb.image -serial stdio -device nec-usb-xhci -device usb-mouse -device usb-kbd -m 512
+	qemu-system-x86_64 -hdb usb.image -serial stdio -device nec-usb-xhci -device usb-mouse -m 512
 
 debug:   usb.image
-	qemu-system-x86_64 -s -S -hdb usb.image -serial stdio -device nec-usb-xhci -device usb-mouse -device usb-kbd -m 512
+	qemu-system-x86_64 -s -S -hdb usb.image -serial stdio -device nec-usb-xhci -device usb-mouse -m 512
 
 #
 # Special rule for creating the modification and offset programs
