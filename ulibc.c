@@ -159,7 +159,7 @@ void argdump( const char *prefix, const char *argv[], int mode ) {
    strcat( buf, b2 );
 
    strcat( buf, " argv @ " );
-   cvt_hex( b2, (uint32_t) argv );
+   cvt_hex( b2, (uint64_t) argv );
    strcat( buf, b2 );
 
    if( argc > 0 ) {
@@ -171,7 +171,7 @@ void argdump( const char *prefix, const char *argv[], int mode ) {
 
 	 for( int i = 0; i < argc; ++i ) {
 	    strcpy( buf, "  " );
-	    int n = cvt_hex( b2, (uint32_t) argv[i] );
+	    int n = cvt_hex( b2, (uint64_t) argv[i] );
 	    while( n < 8 ) {  // zero-fill the prefix
 	       strcat( buf, "0" );
 	       ++n;
@@ -188,11 +188,11 @@ void argdump( const char *prefix, const char *argv[], int mode ) {
       } else {      // just dump addresses of 1st two args
 
          strcat( buf, ": " );
-         cvt_hex( b2, (uint32_t) argv[0] );
+         cvt_hex( b2, (uint64_t) argv[0] );
          strcat( buf, b2 );
          if( argc > 1 ) {
             strcat( buf, ", " );
-	    cvt_hex( b2, (uint32_t) argv[1] );
+	    cvt_hex( b2, (uint64_t) argv[1] );
 	    strcat( buf, b2 );
             if( argc > 2 ) {
 	       strcat( buf, ", ..." );
@@ -428,7 +428,7 @@ int spawn( int (*entry)(int a,char *v[]), char *argv[], uint8_t prio ) {
 #ifdef TRACE_SPAWN
 #include "c_io.h"
    c_printf( ":: spawn(%08x,%08x,%d), called from %08x\n",
-      (uint32_t) entry, (uint32_t) argv, get_ra() );
+      (uint64_t) entry, (uint64_t) argv, get_ra() );
    argdump( ":: args: ", (const char **) argv, TRUE );
 #endif
    // calculate the necessary length
@@ -455,7 +455,7 @@ int spawn( int (*entry)(int a,char *v[]), char *argv[], uint8_t prio ) {
    char strtbl[MAX_ARGV_CHARS];
    char *ptr = strtbl;
 #if TRACE_SPAWN >= 2
-   c_printf( ":: creating strtbl @ %08x\n", (uint32_t) ptr );
+   c_printf( ":: creating strtbl @ %016x\n", (uint64_t) ptr );
 #endif
 
    for( int i = 0; i < argc; ++i ) {
@@ -511,7 +511,7 @@ int spawn( int (*entry)(int a,char *v[]), char *argv[], uint8_t prio ) {
 
    ptr = strtbl;
 #ifdef TRACE_SPAWN
-   c_printf( ":: #%d creating argv; strtbl @ %08x", myPid, (uint32_t) ptr );
+   c_printf( ":: #%d creating argv; strtbl @ %016x", myPid, (uint64_t) ptr );
 #endif
    for( int i = 0; i < argc; ++i ) {
 #if TRACE_SPAWN >= 2

@@ -42,7 +42,7 @@
 **
 ** Could be used, e.g., by _kpanic to print a traceback
 */
-uint32_t _get_ebp( void );
+uint64_t _get_rbp( void );
 
 /*
 ** _put_char_or_code( ch )

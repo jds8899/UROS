@@ -83,8 +83,8 @@ static void _clk_isr( int vector, int ecode ) {
       // just dump the sizes
       c_printf( "Queues @ %08x:", _system_time );
       c_printf( "  sleep %d wait %d read %d zombie %d",
-         _q_size(_sleeping), _q_size(_waiting),
-         _q_size(_reading), _q_size(_zombie) );
+      _q_size(_sleeping), _q_size(_waiting),
+      _q_size(_reading), _q_size(_zombie) );
       c_puts( " ready [" );
       for( int i = 0; i < N_PRIOS; ++i ) {
          c_printf( "%d", _q_size(_ready[i]) );
@@ -153,9 +153,9 @@ static void _clk_isr( int vector, int ecode ) {
 void _clk_init( void ) {
    uint32_t divisor;
 
-        // announce that we got this far
+   // announce that we got this far
 
-        c_puts( " CLOCK" );
+   c_puts( " CLOCK" );
 
    // start the pinwheel
 
@@ -170,8 +170,8 @@ void _clk_init( void ) {
 
    divisor = TIMER_FREQUENCY / CLOCK_FREQUENCY;
    __outb( TIMER_CONTROL_PORT, TIMER_0_LOAD | TIMER_0_SQUARE );
-        __outb( TIMER_0_PORT, divisor & 0xff );        // LSB of divisor
-        __outb( TIMER_0_PORT, (divisor >> 8) & 0xff ); // MSB of divisor
+   __outb( TIMER_0_PORT, divisor & 0xff );        // LSB of divisor
+   __outb( TIMER_0_PORT, (divisor >> 8) & 0xff ); // MSB of divisor
 
    // register the ISR
 

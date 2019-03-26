@@ -114,7 +114,7 @@ void _bite( pcb_t *pcb ) {
    if( parent->state == ST_WAITING ) {
 
       // pull the parent from the wait queue
-      pcb_t *victim = _q_remove_by( _waiting, (void *)(uint32_t)(parent->pid),
+      pcb_t *victim = _q_remove_by( _waiting, (void *)(uint64_t)(parent->pid),
                            _q_find_pid );
 
       // make sure we got it!
@@ -126,8 +126,8 @@ void _bite( pcb_t *pcb ) {
       } else if( victim != parent ) {
          c_printf(
             "ERR: pid %d: parent %d @ 0x%x != %d @ 0x%x\n",
-            pcb->pid, parent->pid, (uint32_t) parent,
-            victim->pid, (uint32_t) victim );
+            pcb->pid, parent->pid, (uint64_t) parent,
+            victim->pid, (uint64_t) victim );
          _kpanic( "_bite", "found wrong waiting parent" );
       }
 
@@ -185,7 +185,7 @@ void _init( void ) {
    ** Initialize interrupt stuff.
    */
 
-   //__init_interrupts();   // IDT and PIC initialization
+   __init_interrupts();   // IDT and PIC initialization
 
    /*
    ** Console I/O system.
@@ -252,7 +252,7 @@ void _init( void ) {
    // initialize the stack with the standard context
 
    char *argv[] = { "init", NULL };
-   pcb->context = _stk_setup( pcb->stack, (uint32_t) init, argv, 1, 5 );
+   pcb->context = _stk_setup( pcb->stack, (uint64_t) init, argv, 1, 5 );
    if( pcb->context == NULL ) {
       _kpanic( "_init", "init() stack setup failed" );
    }
@@ -360,7 +360,7 @@ void _shell( void ) {
 	       if( _active[i] != NULL ) {
 	          pcb_t *pcb = _active[i];
 		  c_printf( "pid %5d: ", pcb->pid );
-		  c_printf( "EIP %08x, ", pcb->context->eip );
+		  c_printf( "EIP %08x, ", pcb->context->rip );
 		  _stk_dump( NULL, pcb->stack, 12 );
 		  __delay( 200 );
 		}

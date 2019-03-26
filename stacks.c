@@ -133,7 +133,7 @@ void _stk_free( stack_t *stack ) {
 #define	HBUFSZ		48
 #define	CBUFSZ		24
 
-void _stk_dump( const char *msg, stack_t *stack, uint32_t limit ) {
+void _stk_dump( const char *msg, stack_t *stack, uint64_t limit ) {
    int words = STACK_SIZE_U64;
    int eliding = 0;
    char oldbuf[HBUFSZ], buf[HBUFSZ], cbuf[CBUFSZ];
@@ -335,7 +335,7 @@ context_t *_stk_setup( stack_t *stack, uint64_t entry, char *argv[],
    char *save = cptr;
 
 #ifdef TRACE_STACK_SETUP
-   c_printf( "== args @ %08x: ", (uint64_t) cptr );
+   c_printf( "== args @ %016x: ", (uint64_t) cptr );
 #endif
    for( int i = 0; i < argc; ++i ) {
       _kstrcpy( cptr, argv[i] );  // copy the string
@@ -357,13 +357,13 @@ context_t *_stk_setup( stack_t *stack, uint64_t entry, char *argv[],
    */
 
 #ifdef TRACE_STACK_SETUP
-   c_printf( "\n== orig cptr %08x", (uint64_t) save );
+   c_printf( "\n== orig cptr %016x", (uint64_t) save );
 #endif
-   while( ((uint64_t) save) & 3 ) {
+   while( ((uint64_t) save) & 7 ) {
       --save;
    }
 #ifdef TRACE_STACK_SETUP
-   c_printf( " rounded %08x\n", (uint64_t) save );
+   c_printf( " rounded %016x\n", (uint64_t) save );
 #endif
 
    // now, copy in the argv entries in reverse order, starting with the NULL
@@ -373,7 +373,7 @@ context_t *_stk_setup( stack_t *stack, uint64_t entry, char *argv[],
    for( int i = argc; i >= 0; --i ) {
       *--ptr = (uint64_t) args[i];
 #ifdef TRACE_STACK_SETUP
-      c_printf( ", av[%d] %08x to %08x", i, (uint32_t) args[i],
+      c_printf( ", av[%d] %016x to %016x", i, (uint64_t) args[i],
          (uint64_t) ptr );
 #endif
    }
@@ -400,15 +400,14 @@ context_t *_stk_setup( stack_t *stack, uint64_t entry, char *argv[],
    context = ((context_t *) ptr) - 1;
 
    // initialize all the registers that should be non-zero
-   context->eflags = DEFAULT_EFLAGS;
+   context->rflags = DEFAULT_EFLAGS;
    context->rip = entry;
    context->rbp = 0;  // end of EBP stack frame chain
-   context->cs = GDT_CODE;
-   context->ss = GDT_STACK;
-   context->ds = GDT_DATA;
-   context->es = GDT_DATA;
-   context->fs = GDT_DATA;
-   context->gs = GDT_DATA;
+
+   // We are using registers to pass paramters now
+   // TODO: Don't put this stuff on the stack?
+   context->rdi = argc;
+   context->rsi = (uint64_t)argv;
 
    // all done!
    return( context );

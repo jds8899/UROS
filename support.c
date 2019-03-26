@@ -80,8 +80,6 @@ static void __default_unexpected_handler( int vector, int code ){
 		_context_dump( "Faulting context", ctxt );
 	}
 #endif
-	c_clearscreen();
-	c_printf("vector: 0x%016x\ncode:   0x%016x",vector, code);
 	__panic( "Unexpected interrupt" );
 }
 
@@ -108,8 +106,6 @@ static void __default_expected_handler( int vector, int code ){
 		** code above.  If we get down here, the isr table may
 		** have been corrupted.  Print message and don't return.
 		*/
-		c_clearscreen();
-		c_printf("vector: %x\ncode: %x",vector, code);
 		__panic( "Unexpected \"expected\" interrupt!" );
 	}
 }

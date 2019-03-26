@@ -31,7 +31,7 @@
 #define	SYSCALL(name) \
 	.globl	name			; \
 name:					; \
-	movl	$SYS_##name, %eax	; \
+	movq	$SYS_##name, %rax	; \
 	int	$INT_VEC_SYSCALL	; \
 	ret
 
@@ -66,7 +66,7 @@ SYSCALL(bogus)
 
 	.globl  do_exit
 do_exit:
-	pushl   %eax    // use whatever was in EAX as the status
+	pushq   %rax    // use whatever was in EAX as the status
 	call    exit    // terminate this process
 
 /*
@@ -82,5 +82,5 @@ get_ra:
 	//
 	// Caller's return address is between the saved EBP
 	// and its first parameter
-	movl	4(%ebp), %eax
+	movq	8(%rbp), %rax
 	ret

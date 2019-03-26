@@ -26,7 +26,7 @@
 
 // parameters related to word size
 
-#define	WORD_SIZE		sizeof(long)
+#define	WORD_SIZE		sizeof(uint64_t)
 #define	LOG2_OF_WORD_SIZE	3
 
 /*
@@ -38,7 +38,7 @@
 **		the first one.
 */
 #define	adjacent(first,second)	\
-   ( &(first)->info.memory + (first)->length == (long *)(second) )
+   ( &(first)->info.memory + (first)->length == (uint64_t *)(second) )
 
 /*
 ** Name:	length_of
@@ -64,7 +64,7 @@ typedef struct st_blkinfo {
    uint64_t length;		// usable length of this block, in words
    union {
       struct st_blkinfo *next;	// pointer to the next free block
-      int memory;		// first word of the block
+      uint64_t memory;		// first word of the block
    } info;
 } Blockinfo;
 
@@ -78,7 +78,7 @@ static Blockinfo *_freelist;
 ** PUBLIC GLOBAL VARIABLES
 */
 
-extern int _end;	// end of the BSS section - provided by the linker
+extern uint64_t _end;	// end of the BSS section - provided by the linker
 
 /*
 ** PRIVATE FUNCTIONS
@@ -101,11 +101,11 @@ static void _add_block( uint64_t base, uint64_t length ) {
    */
 
    block = (Blockinfo *) base;
-   block->length = (long *) (base + length) - &block->info.memory;
+   block->length = (uint64_t *) (base + length) - &block->info.memory;
    block->info.next = NULL;
 
 #ifdef DEBUG_KMALLOC_FREELIST
-c_printf( "## _add_block(%08x,%d): addr %08x len %d\n",
+c_printf( "## _add_block(%016x,%d): addr %016x len %d\n",
    base, length, (uint64_t) block, block->length );
 #endif
    /*
@@ -182,12 +182,12 @@ c_printf( "## _add_block(%08x,%d): addr %08x len %d\n",
 void _dump_freelist( void ){
    Blockinfo *block;
 
-   c_printf( "&_freelist=%08x\n", &_freelist );
+   c_printf( "&_freelist=%016x\n", &_freelist );
 
    for( block = _freelist; block != NULL; block = block->info.next ){
 
-      c_printf( "block=%08x length=%08x (ends at %08x) next=%08x\n",
-          block, block->length, block->length * 8 + 8 + (long)block,
+      c_printf( "block=%016x length=%016x (ends at %016x) next=%016x\n",
+          block, block->length, block->length * 4 + 4 + (uint64_t)block,
           block->info.next );
    }
 
@@ -247,10 +247,10 @@ c_printf( ", len -> %d", desired_length );
       ** this one.
       */
 #ifdef DEBUG_KMALLOC
-c_printf( ", got %08x/%d", (uint64_t)block, block->length );
+c_printf( ", got %016x/%d", (uint64_t)block, block->length );
 #endif
       Blockinfo *fragment;
-      long fragment_size;
+      uint64_t fragment_size;
 
       fragment_size = sizeof( block->length ) / WORD_SIZE
           + desired_length;
@@ -268,7 +268,7 @@ c_printf( ", got %08x/%d", (uint64_t)block, block->length );
       *pointer = block->info.next;
    }
 #ifdef DEBUG_KMALLOC
-c_printf( ", returns %08x/%d\n", (uint64_t) (&block->info.memory),
+c_printf( ", returns %08x/%d\n", (uint32_t) (&block->info.memory),
    block->length );
 #endif
    return &block->info.memory;
@@ -360,8 +360,8 @@ void _kfree( void *address ){
 */
 
 typedef struct st_MemRegion {
-   uint64_t base[2];	// base address
-   uint64_t length[2];	// region length
+   uint64_t base;	// base address
+   uint64_t length;	// region length
    uint32_t type;	// type of region
    uint32_t acpi;	// ACPI 3.0 info
 } __attribute__((packed)) region_t;
@@ -390,7 +390,7 @@ typedef struct st_MemRegion {
 **		the list of free memory blocks.
 */
 void _km_init( void ){
-   int64_t entries;
+   uint64_t entries;
    region_t *region;
    uint64_t cutoff;
 
@@ -407,12 +407,12 @@ void _km_init( void ){
    // round it up to the next multiple of 0x10000
 
    if( cutoff & 0xffff ) {
-   	cutoff &= 0xffff0000;
-	cutoff += 0x00010000;
+   	  cutoff &= 0xffffffffffff0000;
+	  cutoff += 0x0000000000010000;
    }
 
 #ifdef DEBUG_KMALLOC
-   c_printf( "+++ _km_init, _end %08x cutoff %08x\n", 
+   c_printf( "+++ _km_init, _end %016x cutoff %016x\n", 
       (uint64_t) &_end, (uint64_t) cutoff );
 #endif
 
@@ -429,7 +429,7 @@ void _km_init( void ){
 
    region = ((region_t *) (MMAP_ADDRESS + 4));
 
-   for( int i = 0; i < entries; ++i, ++region ) {
+   for( int i = 0; i < entries; ++i ) {
 
 #if 0
       c_printf( "#%2d: ", i );
@@ -468,39 +468,41 @@ void _km_init( void ){
       // OK, we have a "normal" memory region - verify that it's usable
 
       // ignore it if it's above 4GB, or longer than that
-
+/*
       if( region->base[1] != 0 || region->length[1] != 0 ) {
          continue;
       }
-
+*/
       // see if it's below our arbitrary cutoff point
       	
 
-      uint64_t base = region->base[0];
-      uint64_t length = region->length[0];
+      uint64_t base = region->base;
+      uint64_t length = region->length;
 
       if( base < cutoff ) {
 
          // is the whole thing too low, or just part?
 
-	 if( (base + length) < cutoff ) {
-	    // too short!
-	    continue;
-	 }
+         if( (base + length) < cutoff ) {
+            // too short!
+            continue;
+	     }
 
-	 // recalculate the length, starting at our cutoff point
+         // recalculate the length, starting at our cutoff point
 
-	 uint64_t loss = cutoff - base;
+         uint64_t loss = cutoff - base;
 
-	 // reset the length and the base address
-	 length -= loss;
-	 base = cutoff;
+         // reset the length and the base address
+         length -= loss;
+         base = cutoff;
 
       }
 
       // add the new block
 
       _add_block( base, length );
+
+	  region = (region_t*)(((uint64_t)region) + 4);
 
 #endif
 

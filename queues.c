@@ -591,11 +591,11 @@ void _q_dump( const char *msg, queue_t que ) {
       return;
    }
 
-   c_printf( "head %08x tail %08x %d items",
-            (uint32_t) que->head, (uint32_t) que->tail, que->size );
+   c_printf( "head %016x tail %016x %d items",
+            (uint64_t) que->head, (uint64_t) que->tail, que->size );
 
    if( que->compare ) {
-      c_printf( " cmp %08x\n", (uint32_t) que->compare );
+      c_printf( " cmp %016x\n", (uint64_t) que->compare );
    } else {
       c_puts( " FIFO\n" );
    }
@@ -604,7 +604,7 @@ void _q_dump( const char *msg, queue_t que ) {
       c_puts( " data: " );
       i = 0;
       for( tmp = que->head; i < 5 && tmp != NULL; ++i, tmp = tmp->next ) {
-         c_printf( " [%08x]", (uint32_t) tmp->data );
+         c_printf( " [%016x]", (uint64_t) tmp->data );
       }
 
       if( tmp != NULL ) {
@@ -690,7 +690,7 @@ int _q_order_wakeup( const void *a1, const void *a2 ) {
 
 int _q_find_pid( const void *data, const void *proc ) {
    const pcb_t *p1 = (const pcb_t *) proc;
-   uint32_t ldata = (uint32_t) data & 0x0000ffff;
+   uint64_t ldata = (uint64_t) data & 0x0000ffff;
    
    return( ldata == p1->pid );
 }
@@ -706,7 +706,7 @@ int _q_find_pid( const void *data, const void *proc ) {
 
 int _q_find_ppid( const void *data, const void *proc ) {
    const pcb_t *p1 = (const pcb_t *) proc;
-   uint32_t ldata = (uint32_t) data & 0x0000ffff;
+   uint64_t ldata = (uint64_t) data & 0x0000ffff;
    
    return( ldata == p1->ppid );
 }

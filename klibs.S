@@ -20,6 +20,6 @@
 */
 
 	.globl	_get_ebp
-_get_ebp:
-	movl	%ebp, %eax
+_get_rbp:
+	movq	%rbp, %rax
 	ret

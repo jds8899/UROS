@@ -273,15 +273,17 @@ void _context_dump( const char *msg, context_t *context ) {
       return;
    }
 
-   c_printf( "\n     ss %08x  gs %08x  fs %08x  es %08x\n",
-             context->ss, context->gs, context->fs, context->es );
-   c_printf( "     ds %08x edi %08x esi %08x ebp %08x\n",
-             context->ds, context->rdi, context->rsi, context->rbp );
-   c_printf( "    esp %08x ebx %08x edx %08x ecx %08x\n",
-             context->rsp, context->rbx, context->rdx, context->rcx );
-   c_printf( "    eax %08x vec %08x cod %08x eip %08x\n",
-             context->rax, context->vector, context->code, context->rip );
-   c_printf( "     cs %08x efl %08x\n", context->cs, context->eflags );
+   c_printf( "\n     r15 %016x  r14 %016x  r13 %016x  r12 %016x\n",
+             context->r15, context->r14, context->r13, context->r12 );
+   c_printf( "     r11 %016x r10 %016x r9 %016x r8 %016x\n",
+             context->r11, context->r10, context->r9, context->r8 );
+   c_printf( "    rdx %016x rcx %016x rbx %016x rax %016x\n",
+             context->rdx, context->rcx, context->rbx, context->rax );
+   c_printf( "    rdi %016x rsi %016x rsi %016x rbp %016x\n",
+             context->rdi, context->rsi, context->rsi, context->rbp );
+   c_printf( "     rsp %016x vec %016x cod %016x rip %016x\n",
+             context->rsp, context->vector, context->code, context->rip );
+   c_printf( "     cs %08x rfl %08x\n", context->cs, context->rflags );
 }
 
 /*
@@ -318,7 +320,7 @@ void _active_dump( const char *msg, int all ) {
 
 	 // do we want more info?
          if( all ) {
-	    c_printf( " stk %08x len %d\n", (uint32_t) _active[i]->stack,
+	    c_printf( " stk %016x len %d\n", (uint64_t) _active[i]->stack,
 	       *(((uint64_t *)_active[i]->stack)-1) );
 	 }
 

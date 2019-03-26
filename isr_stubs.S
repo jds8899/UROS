@@ -78,45 +78,46 @@ isr_save:
 **	    saved CS		saved by the hardware
 **	    saved EFLAGS	saved by the hardware
 */
-	//pusha			// save E*X, ESP, EBP, ESI, EDI
-	//pushq	%ds		// save segment registers
-	//pushq	%es
-	//pushq	%fs
-	//pushq	%gs
-	//pushq	%ss
+	pushq	%rsp
+	pushq	%rbp
 	pushq	%rsi
 	pushq	%rdi
 	pushq	%rax
+	pushq	%rbx
 	pushq	%rcx
 	pushq	%rdx
 	pushq	%r8
 	pushq	%r9
 	pushq	%r10
 	pushq	%r11
+	pushq	%r12
+	pushq	%r13
+	pushq	%r14
+	pushq	%r15
 
 /*
 ** Stack contents (all 64-bit quadwords) and offsets from ESP:
 **
-**   R11 R10 R9 R8 RDX RCX RAX RDI RSI vec cod RIP CS RFL
-**    0   8  16 24 32  40  48  56  64  72  80  88  96 104
+**   R15 R14 R13 R12 R11 R10 R9 R8 RDX RCX RBX RAX RDI RSI RBP RSP vec cod RIP CS  RFL
+**    0   8  16  24  32  40  48 56 64  72  80  88  96  104 112 120 128 136 144 152 160
 **
 ** Note that the saved ESP is the contents before the PUSHA.
 **
 ** Set up parameters for the ISR call.
 */
-	movq	72(%rsp),%rax	// get vector number and error code
-	movq	80(%rsp),%rcx
+	movq	128(%rsp),%rax	// get vector number and error code
+	movq	136(%rsp),%rcx
 
 /*
 ** MOD for 20175 CSCI452
 */
-/*
+
 	.globl	_current
 	.globl	_system_rsp
 
 	movq	_current, %rdx	// save context pointer for the current proc
 	movq	%rsp, (%rdx)	// *** must be the first field in the PCB
-*/
+
 	/*
 	** IMPORTANT NOTE:  this code is inherently non-reentrant!
 	**
@@ -124,9 +125,9 @@ isr_save:
 	** supports reentrant ISRs or interruptable ISRs, this code will
 	** need to be changed.
 	*/
-/*
+
 	movq	_system_rsp, %rsp	// switch to the OS stack
-*/
+
 /*
 ** END MOD for 20175 CSCI452
 */
@@ -152,10 +153,10 @@ __isr_restore:
 /*
 ** MOD for 20175 CSCI452
 */
-/*
+
 	movq	_current, %rdx	// return to user stack
-	movl	(%rdx), %rsp	// ESP now points to context save area
-*/
+	movq	(%rdx), %rsp	// RSP now points to context save area
+
 /*
 ** END MOD for 20175 CSCI452
 */
@@ -221,21 +222,22 @@ __isr_restore:
 /*
 ** Restore the context.
 */
-	//popq	%ss		// restore the segment registers
-	//popq	%gs
-	//popq	%fs
-	//popq	%es
-	//popq	%ds
-	//popa			// restore others
+	popq	%r15
+	popq	%r14
+	popq	%r13
+	popq	%r12
 	popq	%r11
 	popq	%r10
 	popq	%r9
 	popq	%r8
 	popq	%rdx
 	popq	%rcx
+	popq	%rbx
 	popq	%rax
 	popq	%rdi
 	popq	%rsi
+	popq	%rbp
+	popq	%rsp
 	addq	$16, %rsp	// discard the error code and vector
 	iretq			// and return
 

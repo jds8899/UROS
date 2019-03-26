@@ -10,25 +10,27 @@
 #
 # User supplied files
 #
-SYS_C_SRC = 
+SYS_C_SRC = clock.c klibc.c kmalloc.c pcbs.c queues.c scheduler.c \
+	sio.c stacks.c syscalls.c system.c
 
-SYS_C_OBJ = 
+SYS_C_OBJ = clock.o klibc.o kmalloc.o pcbs.o queues.o scheduler.o \
+	sio.o stacks.o syscalls.o system.o
 
-SYS_S_SRC =
+SYS_S_SRC = klibs.S
 
-SYS_S_OBJ =
+SYS_S_OBJ = klibs.o
 
 SYS_SRCS = $(SYS_C_SRC) $(SYS_S_SRC)
 
 SYS_OBJS = $(SYS_C_OBJ) $(SYS_S_OBJ)
 
-USR_C_SRC =
+USR_C_SRC = ulibc.c users.c
 
-USR_C_OBJ =
+USR_C_OBJ = ulibc.o users.o
 
-USR_S_SRC =
+USR_S_SRC = ulibs.S
 
-USR_S_OBJ =
+USR_S_OBJ = ulibs.o
 
 USR_SRCS = $(USR_C_SRC) $(USR_S_SRC)
 USR_OBJS = $(USR_C_OBJ) $(USR_S_OBJ)
@@ -174,10 +176,10 @@ prog.out: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o prog.out $(OBJECTS)
 
 prog.o:	$(OBJECTS)
-	$(LD) $(LDFLAGS) -o prog.o -Ttext 0x10000 -Tdata 0x15000 -Tbss 0x20000 $(OBJECTS) $(U_LIBS)
+	$(LD) $(LDFLAGS) -o prog.o -Ttext 0x10000 -Tdata 0x20000 -Tbss 0x25000 $(OBJECTS) $(U_LIBS)
 
 prog.b:	prog.o
-	$(LD) $(LDFLAGS) -o prog.b -s --oformat binary -Ttext 0x10000 -Tdata 0x15000 -Tbss 0x20000 prog.o
+	$(LD) $(LDFLAGS) -o prog.b -s --oformat binary -Ttext 0x10000 -Tdata 0x20000 -Tbss 0x25000 prog.o
 
 #
 # Targets for copying bootable image onto boot devices

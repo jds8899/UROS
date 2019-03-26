@@ -77,13 +77,14 @@ static void _sys_isr( int vector, int ecode ) {
    
    // which one does the user want?
 
-   code = REG(_current,eax);
+   code = REG(_current,rax);
    
    // verify that it's legal - if not, it's adios, muchacho!
 
    if( code >= N_SYSCALLS ) {
       code = SYS_exit;
-      ARG(_current,1) = EXIT_BAD_CODE;
+      //ARG(_current,1) = EXIT_BAD_CODE;
+      REG(_current,rdi) = EXIT_BAD_CODE;
    }
    
    // invoke it
@@ -151,7 +152,8 @@ static void _sys_ppid( void ) {
 **      the priority of the process as an integer, or an error code
 */
 static void _sys_get_prio( void ) {
-   uint16_t whom = ARG(_current,1);
+   //uint16_t whom = ARG(_current,1);
+   uint16_t whom = REG(_current,rdi);
    
    // alias for the current process
 
@@ -177,8 +179,11 @@ static void _sys_get_prio( void ) {
 **      the old priority of the process as an integer, or an error code
 */
 static void _sys_set_prio( void ) {
-   uint16_t whom = ARG(_current,1);
-   uint8_t prio = ARG(_current,2);
+   //uint16_t whom = ARG(_current,1);
+   //uint8_t prio = ARG(_current,2);
+   
+   uint16_t whom = REG(_current,rdi);
+   uint8_t prio = REG(_current,rsi);
    
    // interpret 0 as a reference to the current process
 
@@ -223,7 +228,8 @@ static void _sys_set_prio( void ) {
 **      interprets a time of 0 as a request to yield the CPU
 */
 static void _sys_sleep( void ) {
-   uint32_t ms = ARG(_current,1);
+   //uint32_t ms = ARG(_current,1);
+   uint32_t ms = REG(_current,rdi);
    
    // determine the wakeup time
 
@@ -334,7 +340,7 @@ static void _sys_fork( void ) {
 
    // figure out the byte offset from one stack to the other
 
-   int32_t offset = (int)
+   int64_t offset = (long)
       ( ((void *)new->stack) - ((void *)_current->stack) );
       
    // add this to the child's context pointer
@@ -344,15 +350,15 @@ static void _sys_fork( void ) {
       
    // fix the child's EBP and ESP values
 
-   REG(new,ebp) += offset;
-   REG(new,esp)  = (uint32_t) new->context;
+   REG(new,rbp) += offset;
+   REG(new,rsp)  = (uint64_t) new->context;
    
-   // follow the EBP chain through the child's stack
+   // follow the RBP chain through the child's stack
 
-   uint32_t *bp = (uint32_t *) REG(new,ebp);
+   uint64_t *bp = (uint64_t *) REG(new,rbp);
    while( bp && *bp ) {
       *bp += offset;
-      bp = (uint32_t *) *bp;
+      bp = (uint64_t *) *bp;
    }
    
    // add the new process to the active table
@@ -405,20 +411,20 @@ static void _sys_fork( void ) {
 **   else, returns an error code
 */
 static void _sys_exec( void ) {
-   uint32_t entry = ARG(_current,1);
-   char **argv = (char **) ARG(_current,2);
+   uint64_t entry = REG(_current,rdi);
+   char **argv = (char **) REG(_current,rsi);
    
    // clean up the stack and set it up for the process
 
 #ifdef TRACE_EXEC
-   c_printf( "++ _sys_exec: curr %08x pid %d entry %08x stk %08x\n",
-      (uint32_t) _current, _current->pid, entry,
-      (uint32_t) _current->stack );
-   c_printf( "++ argv %08x", (uint32_t) argv );
+   c_printf( "++ _sys_exec: curr %016x pid %d entry %016x stk %016x\n",
+      (uint64_t) _current, _current->pid, entry,
+      (uint64_t) _current->stack );
+   c_printf( "++ argv %016x", (uint64_t) argv );
    if( argv != NULL ) {
-      c_printf( ", [0] %08x", (uint32_t) (argv[0]) );
+      c_printf( ", [0] %016x", (uint64_t) (argv[0]) );
       if( argv[0] ) c_printf( " '%s'", argv[0] );
-      c_printf( ", [1] %08x", (uint32_t) (argv[1]) );
+      c_printf( ", [1] %016x", (uint64_t) (argv[1]) );
       if( argv[1] ) c_printf( " '%s'", argv[1] );
       c_putchar( '\n' );
    } else {
@@ -467,11 +473,11 @@ static void _sys_exec( void ) {
    args[argc] = NULL;
 
 #ifdef TRACE_EXEC
-   c_printf( "++ pre-setup len %d argc %d args %08x", len, argc,
-      (uint32_t) args );
-   c_printf( ", [0] %08x", (uint32_t) (args[0]) );
+   c_printf( "++ pre-setup len %d argc %d args %016x", len, argc,
+      (uint64_t) args );
+   c_printf( ", [0] %016x", (uint64_t) (args[0]) );
    if( args[0] ) c_printf( " '%s'", args[0] );
-   c_printf( ", [1] %08x", (uint32_t) (args[1]) );
+   c_printf( ", [1] %016x", (uint64_t) (args[1]) );
    if( args[1] ) c_printf( " '%s'", args[1] );
    c_putchar( '\n' );
 #endif
@@ -481,16 +487,16 @@ static void _sys_exec( void ) {
    _current->context = _stk_setup( _current->stack, entry, args, argc, len );
 
 #ifdef TRACE_EXEC
-   c_printf( "++ _sys_exec: curr %08x pid %d entry %08x stk %08x ctxt %08x\n",
-      (uint32_t) _current, _current->pid, entry,
-      (uint32_t) _current->stack, (uint32_t) _current->context );
+   c_printf( "++ _sys_exec: curr %016x pid %d entry %016x stk %016x ctxt %016x\n",
+      (uint64_t) _current, _current->pid, entry,
+      (uint64_t) _current->stack, (uint64_t) _current->context );
    _stk_dump( NULL, _current->stack, 12 );
    _shell(); // invoke the interactive shell to pause things
 #endif
 
    if( _current->context == NULL ) {
-      c_printf( "*** exec: pid %d stk %08x got NULL context\n",
-         _current->pid, (uint32_t) _current->stack );
+      c_printf( "*** exec: pid %d stk %016x got NULL context\n",
+         _current->pid, (uint64_t) _current->stack );
       _kpanic( "_sys_exec", "NULL context from _stk_setup" );
    }
 
@@ -512,7 +518,7 @@ static void _sys_exec( void ) {
 **      E_BAD_PID if not found
 */
 static void _sys_kill( void ) {
-   uint16_t pid = ARG(_current,1);
+   uint16_t pid = REG(_current,rdi);
    pcb_t *pcb = NULL;
    
    // interpret 0 as "ourselves"
@@ -578,13 +584,13 @@ static void _sys_kill( void ) {
    // assuming there is one, remove the victim from the queue
 
    if( which != NULL ) {
-      pcb_t *victim = _q_remove_by( which, (void *) (uint32_t) pcb->pid,
+      pcb_t *victim = _q_remove_by( which, (void *) (uint64_t) pcb->pid,
                           _q_find_pid );
 
       // verify that it's the correct victim
       if( victim != pcb ) {
          c_printf( "ERR: kill(%d), orig PCB %x victim PCB %x???\n",
-       pcb->pid, (uint32_t) pcb, (uint32_t) victim );
+       pcb->pid, (uint64_t) pcb, (uint64_t) victim );
          _kpanic( "_sys_kill", "wrong victim found???" );
       }
    }
@@ -614,7 +620,7 @@ static void _sys_kill( void ) {
 ** does not return
 */
 static void _sys_exit( void ) {
-   int32_t status = ARG(_current,1);
+   int32_t status = REG(_current,rdi);
    pcb_t *pcb = _current;
    
    // remember the exit status
@@ -642,9 +648,9 @@ static void _sys_exit( void ) {
 */
 static void _sys_read( void ) {
    int n = 0;
-   int chan = ARG(_current,1);
-   char *buf = (char *) ARG(_current,2);
-   int length = ARG(_current,3);
+   int chan = REG(_current,rdi);
+   char *buf = (char *) REG(_current,rsi);
+   int length = REG(_current,rdx);
 
    // try to get the next character
 
@@ -705,9 +711,9 @@ static void _sys_read( void ) {
 **   the count of characters transferred, or an error code
 */
 static void _sys_write( void ) {
-   int chan = ARG(_current,1);
-   const char *buf = (const char *) ARG(_current,2);
-   int length = ARG(_current,3);
+   int chan = REG(_current,rdi);
+   const char *buf = (const char *) REG(_current,rsi);
+   int length = REG(_current,rdx);
 
    // this is almost insanely simple, but it does separate
    // the low-level device access fromm the higher-level
@@ -757,7 +763,7 @@ static void _sys_wait( void ) {
 
    // find the first zombie child
 
-   pcb_t *child = _q_remove_by( _zombie, (void *) (uint32_t) _current->pid,
+   pcb_t *child = _q_remove_by( _zombie, (void *) (uint64_t) _current->pid,
                _q_find_ppid );
 
    // if there wasn't one, block the process until one appears;
@@ -777,7 +783,7 @@ static void _sys_wait( void ) {
       // found one - collect and return its exit status
 
       RET(_current) = child->pid;
-      int32_t *status = (int32_t *) ARG(_current,1);
+      int32_t *status = (int32_t *) REG(_current,rdi);
       *status = child->exitstatus;
 
       // one fewer child
@@ -796,7 +802,7 @@ static void _sys_wait( void ) {
 ** implements:  void dumpme( int fatal );
 */
 static void _sys_dumpme( void ) {
-   int fatal = ARG(_current,1);
+   int fatal = REG(_current,rdi);
 
    _pcb_dump( "*** PROCESS DUMP REQUESTED", _current );
    _context_dump( "*** Context", _current->context );
