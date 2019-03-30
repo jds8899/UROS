@@ -134,7 +134,7 @@ void _bite( pcb_t *pcb ) {
       // found it; give the parent the child's info
 
       RET(parent) = pcb->pid;
-      int32_t *status = (int32_t *) ARG(parent,1);
+      int32_t *status = (int32_t *) REG(parent,rdi);
       *status = pcb->exitstatus;
 
       // clean up the child
@@ -192,7 +192,7 @@ void _init( void ) {
    */
 
    c_io_init();   // also installs a console receiver interrupt handler
-   for(;;){}
+
 #ifdef ISR_DEBUGGING_CODE
    c_setscroll( 0, 7, 99, 99 );
    c_puts_at( 0, 6, "================================================================================" );
@@ -268,6 +268,8 @@ void _init( void ) {
 
    // remember it
    _init_pcb = pcb;
+   //_context_dump("init",_init_pcb->context);
+   //for(;;){}
 
    // put it on the ready queue
    _schedule( pcb );

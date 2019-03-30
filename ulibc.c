@@ -427,8 +427,8 @@ int spawn( int (*entry)(int a,char *v[]), char *argv[], uint8_t prio ) {
 
 #ifdef TRACE_SPAWN
 #include "c_io.h"
-   c_printf( ":: spawn(%08x,%08x,%d), called from %08x\n",
-      (uint64_t) entry, (uint64_t) argv, get_ra() );
+   c_printf( ":: spawn(%016x,%016x,%d), called from %016x\n",
+      (uint64_t) entry, (uint64_t) argv, prio, get_ra() );
    argdump( ":: args: ", (const char **) argv, TRUE );
 #endif
    // calculate the necessary length

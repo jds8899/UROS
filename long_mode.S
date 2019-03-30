@@ -22,6 +22,7 @@ _long_mode_init:
 	call	check_long_mode
 
 	call	enable_paging
+	call	xmm_enable
 	call	gdt_setup
 	ret
 
@@ -57,13 +58,19 @@ check_long_mode:
 	jz		no_long_mode
 	ret
 
+xmm_enable:
+	mov		%cr0, %eax
+	and		$0xFFFB, %ax
+	or		$0x2, %ax
+	mov		%eax, %cr0
+	mov		%cr4, %eax
+	or		$3 << 9, %ax
+	mov		%eax, %cr4
+	ret
 
 enable_paging:
 	mov		$RMTEXT_ADDRESS, %edi
 	mov		%edi, %cr3
-	//xor		%eax, %eax
-	//mov		$4096, %ecx
-	//rep		stosl
 	mov		%cr3, %edi
 
 	mov		$RMTEXT_ADDRESS, %edx
@@ -129,21 +136,13 @@ long_mode_entry:
 	mov		%ax, %gs
 	xor		%ax, %ax
 	mov		%ax, %ss
-	movq	$0x2f592f412f4b2f4f, %rax
-	movq	%rax, (0xb8000)
+	//movq	$0x2f592f412f4b2f4f, %rax
+	//movq	%rax, (0xb8000)
 	movq	$TARGET_STACK, %rbp	/* set up the system frame pointer */
 	movq	%rbp, %rsp	/* and stack pointer */
-	call	idt_setup
-	call	__init_interrupts
-	call	c_io_init
-	sti
-	nop
-	call	c_clearscreen
-end:
-	call	c_getchar
-	jmp		end
-	cli
-	hlt
+
+	call	_init
+	jmp	__isr_restore   // defined in isr_stubs.S
 
 	.code32
 /*

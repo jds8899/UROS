@@ -66,7 +66,7 @@ SYSCALL(bogus)
 
 	.globl  do_exit
 do_exit:
-	pushq   %rax    // use whatever was in EAX as the status
+	movq   %rax, %rdi    // use whatever was in EAX as the status
 	call    exit    // terminate this process
 
 /*

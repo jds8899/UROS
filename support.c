@@ -73,7 +73,7 @@ static void __default_unexpected_handler( int vector, int code ){
 	if( _current ) {
 		_pcb_dump( "Current PCB", _current );
 		_context_dump( "Current context", _current->context );
-		_stk_dump( "Current stack", _current->stack, 0 );
+		//_stk_dump( "Current stack", _current->stack, 0 );
 	} else {
 		c_puts( "No current PCB, dumping context the hard way\n" );
 		context_t *ctxt = (context_t *) ((&vector)+2);

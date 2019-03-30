@@ -186,8 +186,8 @@ void _dump_freelist( void ){
 
    for( block = _freelist; block != NULL; block = block->info.next ){
 
-      c_printf( "block=%016x length=%016x (ends at %016x) next=%016x\n",
-          block, block->length, block->length * 4 + 4 + (uint64_t)block,
+      c_printf( "block=%016x length=%016x (ends at %016x)\nnext=%016x\n",
+          block, block->length, block->length * 8 + 8 + (uint64_t)block,
           block->info.next );
    }
 
@@ -268,7 +268,7 @@ c_printf( ", got %016x/%d", (uint64_t)block, block->length );
       *pointer = block->info.next;
    }
 #ifdef DEBUG_KMALLOC
-c_printf( ", returns %08x/%d\n", (uint32_t) (&block->info.memory),
+c_printf( ",\nreturns %016x/%d\n", (uint64_t) (&block->info.memory),
    block->length );
 #endif
    return &block->info.memory;
@@ -429,7 +429,7 @@ void _km_init( void ){
 
    region = ((region_t *) (MMAP_ADDRESS + 4));
 
-   for( int i = 0; i < entries; ++i ) {
+   for( int i = 0; i < entries; ++i, ++region ) {
 
 #if 0
       c_printf( "#%2d: ", i );
@@ -469,7 +469,7 @@ void _km_init( void ){
 
       // ignore it if it's above 4GB, or longer than that
 /*
-      if( region->base[1] != 0 || region->length[1] != 0 ) {
+      if( region->base >> 32 != 0 || region->length >>32 != 0 ) {
          continue;
       }
 */
@@ -502,7 +502,7 @@ void _km_init( void ){
 
       _add_block( base, length );
 
-	  region = (region_t*)(((uint64_t)region) + 4);
+	  //region = (region_t*)(((uint64_t)region) + 4);
 
 #endif
 

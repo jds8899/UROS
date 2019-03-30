@@ -723,6 +723,7 @@ void c_io_init( void ){
 	curr_y = min_y;
 	curr_x = min_x;
 	__c_setcursor();
+	c_clearscreen();
 	/*
 	** Set up the interrupt handler for the keyboard
 	*/

@@ -273,17 +273,17 @@ void _context_dump( const char *msg, context_t *context ) {
       return;
    }
 
-   c_printf( "\n     r15 %016x  r14 %016x  r13 %016x  r12 %016x\n",
+   c_printf( "\n    r15 %016x r14 %016x\n    r13 %016x r12 %016x\n",
              context->r15, context->r14, context->r13, context->r12 );
-   c_printf( "     r11 %016x r10 %016x r9 %016x r8 %016x\n",
+   c_printf( "    r11 %016x r10 %016x\n    r9  %016x r8  %016x\n",
              context->r11, context->r10, context->r9, context->r8 );
-   c_printf( "    rdx %016x rcx %016x rbx %016x rax %016x\n",
+   c_printf( "    rdx %016x rcx %016x\n    rbx %016x rax %016x\n",
              context->rdx, context->rcx, context->rbx, context->rax );
-   c_printf( "    rdi %016x rsi %016x rsi %016x rbp %016x\n",
-             context->rdi, context->rsi, context->rsi, context->rbp );
-   c_printf( "     rsp %016x vec %016x cod %016x rip %016x\n",
-             context->rsp, context->vector, context->code, context->rip );
-   c_printf( "     cs %08x rfl %08x\n", context->cs, context->rflags );
+   c_printf( "    rdi %016x rsi %016x\n    rbp %016x rsp %016x\n",
+             context->rdi, context->rsi, context->rbp, context->rsp );
+   c_printf( "    vec %016x cod %016x\n    rip %016x\n",
+             context->vector, context->code, context->rip );
+   c_printf( "    cs %08x rfl %08x\n", context->cs, context->rflags );
 }
 
 /*

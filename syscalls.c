@@ -314,9 +314,9 @@ static void _sys_fork( void ) {
       return;
    }
 #if TRACE_SPAWN > 1
-   c_printf( ">> fork(), current PCB %08x stack %08x",
-      (uint32_t) _current, (uint32_t) _current->stack );
-   c_printf( ", new PCB %08x stack %08x\n", (uint32_t) new, (uint32_t) stack );
+   c_printf( ">> fork(), current PCB %016x stack %016x",
+      (uint64_t) _current, (uint64_t) _current->stack );
+   c_printf( ", new PCB %016x stack %016x\n", (uint64_t) new, (uint64_t) stack );
 #endif
    // duplicate the parent's PCB
 
@@ -351,7 +351,7 @@ static void _sys_fork( void ) {
    // fix the child's EBP and ESP values
 
    REG(new,rbp) += offset;
-   REG(new,rsp)  = (uint64_t) new->context;
+   REG(new,rsp) += offset;
    
    // follow the RBP chain through the child's stack
 

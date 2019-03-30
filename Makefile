@@ -66,7 +66,7 @@ USR_OBJS = $(USR_C_OBJ) $(USR_S_OBJ)
 #
 MAIN_OPTIONS = -DSP_OS_CONFIG -DCLEAR_BSS_SEGMENT
 #MAIN_OPTIONS = -DSP_OS_CONFIG -DCLEAR_BSS_SEGMENT -DDUMP_QUEUES
-DBG_OPTIONS = -DSANITY_CHECK -DISR_DEBUGGING_CODE #-DDEBUG_UNEXP_INTS
+DBG_OPTIONS = -DSANITY_CHECK -DISR_DEBUGGING_CODE -DDEBUG_UNEXP_INTS #-DTRACE_SPAWN -DDEBUG_KMALLOC
 USER_OPTIONS = $(MAIN_OPTIONS) $(DBG_OPTIONS)
 
 #
@@ -193,6 +193,9 @@ usb:	usb.image
 
 qemu:   usb.image
 	qemu-system-x86_64 -hdb usb.image -serial stdio -device nec-usb-xhci -device usb-mouse -m 512
+
+qemu-output:   usb.image
+	qemu-system-x86_64 -hdb usb.image -serial stdio -device nec-usb-xhci -device usb-mouse -m 512 -d int,cpu_reset > out.txt 
 
 debug:   usb.image
 	qemu-system-x86_64 -s -S -hdb usb.image -serial stdio -device nec-usb-xhci -device usb-mouse -m 512

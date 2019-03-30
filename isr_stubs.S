@@ -78,7 +78,6 @@ isr_save:
 **	    saved CS		saved by the hardware
 **	    saved EFLAGS	saved by the hardware
 */
-	pushq	%rsp
 	pushq	%rbp
 	pushq	%rsi
 	pushq	%rdi
@@ -98,15 +97,15 @@ isr_save:
 /*
 ** Stack contents (all 64-bit quadwords) and offsets from ESP:
 **
-**   R15 R14 R13 R12 R11 R10 R9 R8 RDX RCX RBX RAX RDI RSI RBP RSP vec cod RIP CS  RFL
-**    0   8  16  24  32  40  48 56 64  72  80  88  96  104 112 120 128 136 144 152 160
+**   R15 R14 R13 R12 R11 R10 R9 R8 RDX RCX RBX RAX RDI RSI RBP vec cod RIP CS  RFL RSP SS
+**    0   8  16  24  32  40  48 56 64  72  80  88  96  104 112 120 128 136 144 152 160 168
 **
 ** Note that the saved ESP is the contents before the PUSHA.
 **
 ** Set up parameters for the ISR call.
 */
-	movq	128(%rsp),%rax	// get vector number and error code
-	movq	136(%rsp),%rcx
+	movq	120(%rsp),%rax	// get vector number and error code
+	movq	128(%rsp),%rcx
 
 /*
 ** MOD for 20175 CSCI452
@@ -185,25 +184,25 @@ __isr_restore:
 	** THE movw CONSTANTS MUST BE CHANGED IF THE LOCATION OF
 	** EITHER FIELD IN THE PCB CHANGES!
 	*/
-/*
+
 	.globl	_system_time
 
-	xorq	%rax, %rax
+	xor		%rax, %rax
 	movw	26(%rdx), %ax	// PPID
-	pushq	%rax
+	movq	%rax, %r9
 	movw	24(%rdx), %ax	// PID
-	pushq	%rax
-	pushq	_system_time	// current system time
-*/
+	movq	%rax, %r8
+	movl	_system_time, %ecx	// current system time
+
 /*
 ** END MOD for 20175 CSCI452
 */
-/*
-	pushq	$fmt
-	pushq	$1
-	pushq	$0
+
+	movq	$fmt, %rdx
+	movq	$1, %rsi
+	movq	$0, %rdi
 	call	c_printf_at
-*/
+
 /*
 ** MOD for 20175 CSCI452
 */
@@ -237,7 +236,6 @@ __isr_restore:
 	popq	%rdi
 	popq	%rsi
 	popq	%rbp
-	popq	%rsp
 	addq	$16, %rsp	// discard the error code and vector
 	iretq			// and return
 
@@ -247,16 +245,16 @@ __isr_restore:
 */
 
 /*
-** MOD MOD for 20175 CSCI452
+** MOD MOD for Capstone
 */
-fmt:	//.ascii	"time %08x pid %5d ppid %5d\n"
-//	.ascii	" ss=%08x  gs=%08x  fs=%08x  es=%08x  ds=%08x\n"
+fmt:	.ascii	"time %08x pid %5d     ppid %5d\n"
+		.ascii	"r15 =%08x r14=%08x r13=%08x r12=%08x r11=%08x r10=%08x\n"
+		.ascii	"r9  =%08x r8 =%08x rdx=%08x rcx=%08x rbx=%08x rax=%08x\n"
+		.ascii	"rdi =%08x rsi=%08x rbp=%08x cod=%08x vec=%08x\n"
+		.string	"rip =%08x cs =%08x rfl=%08x rsp=%08x\n"
 /*
-** END MOD for 20175 CSCI452
+** END MOD for Capstone
 */
-	.ascii	"r11=%08x r10=%08x r9=%08x  r8=%08x   rdx=%08x\n"
-	.ascii	"rcx=%08x rax=%08x rdi=%08x rsi=%016x vec=%08x cod=%08x\n"
-	.string	"rip=%08x  cs=%08x rfl=%08x\n"
 
 /*
 ** END OF DEBUGGING CODE PART 2

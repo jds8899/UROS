@@ -241,12 +241,12 @@ context_t *_stk_setup( stack_t *stack, uint64_t entry, char *argv[],
    context_t *context;
 
 #ifdef TRACE_STACK_SETUP
-   c_printf( "== _stk_setup(%08x,%08x,%08x,%d,%d)\n", (uint64_t) stack,
+   c_printf( "== _stk_setup(%016x,%016x,\n%016x,\n%d,%d)\n", (uint64_t) stack,
       entry, (uint64_t) argv, argc, len );
    if( argv != NULL ) {
-      c_printf( "== argv:  [0] %08x", (uint64_t)argv[0] );
+      c_printf( "== argv:  [0] %016x", (uint64_t)argv[0] );
       if( argv[0] != NULL ) c_printf( " '%s'", argv[0] );
-      c_printf( ", [1] %08x", (uint64_t)argv[1] );
+      c_printf( ", [1] %016x", (uint64_t)argv[1] );
       if( argv[1] != NULL ) c_printf( " '%s'", argv[1] );
       c_putchar( '\n' );
    }
@@ -303,7 +303,7 @@ context_t *_stk_setup( stack_t *stack, uint64_t entry, char *argv[],
 
 #ifdef TRACE_STACK_SETUP
    if( argv != NULL ) {
-      c_printf( "== post-dummy argv %08x  [0] %08x [1] %08x\n",
+      c_printf( "== post-dummy argv %016x  [0] %016x [1] %016x\n",
          (uint64_t)argv, (uint64_t)argv[0], (uint64_t)argv[1] );
    }
 #endif
@@ -341,7 +341,7 @@ context_t *_stk_setup( stack_t *stack, uint64_t entry, char *argv[],
       _kstrcpy( cptr, argv[i] );  // copy the string
       args[i] = cptr;             // remember where it went
 #ifdef TRACE_STACK_SETUP
-      c_printf( " '%s' -> %08x", cptr, (uint64_t) cptr );
+      c_printf( " '%s' -> %016x", cptr, (uint64_t) cptr );
 #endif
       cptr += _kstrlen( argv[i] ) + 1;  // move past it
    }
@@ -386,11 +386,11 @@ context_t *_stk_setup( stack_t *stack, uint64_t entry, char *argv[],
 
    *--ptr = (uint64_t) tmp;
 #ifdef TRACE_STACK_SETUP
-   c_printf( "\n== argv %08x to %08x, ", (uint64_t) tmp, (uint64_t) ptr );
+   c_printf( "\n== argv %016x to %016x, ", (uint64_t) tmp, (uint64_t) ptr );
 #endif
    *--ptr = argc;
 #ifdef TRACE_STACK_SETUP
-   c_printf( "argc %d to %08x\n", argc, (uint64_t) ptr );
+   c_printf( "argc %d to %016x\n", argc, (uint64_t) ptr );
 #endif
 
    // push the "return address"
@@ -401,13 +401,19 @@ context_t *_stk_setup( stack_t *stack, uint64_t entry, char *argv[],
 
    // initialize all the registers that should be non-zero
    context->rflags = DEFAULT_EFLAGS;
+   //context->rflags = 0x00000002;
    context->rip = entry;
-   context->rbp = 0;  // end of EBP stack frame chain
+   context->rbp = 0;  // end of RBP stack frame chain
+   context->cs  = GDT64_CODE;
+   context->ss  = GDT64_DATA;
 
    // We are using registers to pass paramters now
    // TODO: Don't put this stuff on the stack?
    context->rdi = argc;
    context->rsi = (uint64_t)argv;
+
+   // Need to set RSP because hardware always pushes/pops on interrupt in Long Mode
+   context->rsp = ptr;
 
    // all done!
    return( context );
