@@ -201,6 +201,7 @@ __isr_restore:
 	movq	$fmt, %rdx
 	movq	$1, %rsi
 	movq	$0, %rdi
+	xor		%rax, %rax
 	call	c_printf_at
 
 /*

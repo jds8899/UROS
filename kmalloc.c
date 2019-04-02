@@ -452,6 +452,9 @@ void _km_init( void ){
       ** "usable" for our purposes.  We could potentially expand
       ** this to include ACPI "reclaimable" memory.
       */
+	  if((uint64_t) region->base > 0x200000) {
+         continue;
+      }
 
       if( ((region->acpi) & REGION_IGNORE) == 0 ) {
          continue;
@@ -468,11 +471,11 @@ void _km_init( void ){
       // OK, we have a "normal" memory region - verify that it's usable
 
       // ignore it if it's above 4GB, or longer than that
-/*
+
       if( region->base >> 32 != 0 || region->length >>32 != 0 ) {
          continue;
       }
-*/
+
       // see if it's below our arbitrary cutoff point
       	
 

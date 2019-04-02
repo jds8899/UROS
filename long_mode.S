@@ -22,7 +22,7 @@ _long_mode_init:
 	call	check_long_mode
 
 	call	enable_paging
-	call	xmm_enable
+	//call	xmm_enable
 	call	gdt_setup
 	ret
 
