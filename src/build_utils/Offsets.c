@@ -21,13 +21,13 @@
 
 #define	__SP_KERNEL__
 
-#include "common.h"
+#include "../C64/common.h"
 
 // avoid complaints about stdio.h
 #undef NULL
 
-#include "pcbs.h"
-#include "stacks.h"
+#include "../C64/pcbs.h"
+#include "../C64/stacks.h"
 
 #include <stdio.h>
 

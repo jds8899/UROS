@@ -141,6 +141,10 @@ long_mode_entry:
 	movq	$TARGET_STACK, %rbp	/* set up the system frame pointer */
 	movq	%rbp, %rsp	/* and stack pointer */
 
+	.extern	rs_sys_init
+	call	rs_sys_init
+	hlt
+
 	call	_init
 	jmp	__isr_restore   // defined in isr_stubs.S
 

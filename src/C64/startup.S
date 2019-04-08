@@ -70,13 +70,13 @@ _start:
 **
 ** These symbols are defined automatically by the linker.
 */
-	.globl	__bss_start,_end
+	.globl	__bss_start,__bss_end
 
 	movl	$__bss_start,%edi
 clearbss:
 	movl	$0,(%edi)
 	addl	$4,%edi
-	cmpl	$_end,%edi
+	cmpl	$__bss_end,%edi
 	jb	clearbss
 
 #endif

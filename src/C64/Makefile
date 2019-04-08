@@ -10,29 +10,27 @@
 #
 # User supplied files
 #
-SYS_C_SRC = src/C64/clock.c src/C64/klibc.c src/C64/kmalloc.c src/C64/pcbs.c \
-	src/C64/queues.c src/C64/scheduler.c \
-	src/C64/sio.c src/C64/stacks.c src/C64/syscalls.c src/C64/system.c
+SYS_C_SRC = clock.c klibc.c kmalloc.c pcbs.c queues.c scheduler.c \
+	sio.c stacks.c syscalls.c system.c
 
-SYS_C_OBJ = src/C64/clock.o src/C64/klibc.o src/C64/kmalloc.o src/C64/pcbs.o \
-	src/C64/queues.o src/C64/scheduler.o \
-	src/C64/sio.o src/C64/stacks.o src/C64/syscalls.o src/C64/system.o
+SYS_C_OBJ = clock.o klibc.o kmalloc.o pcbs.o queues.o scheduler.o \
+	sio.o stacks.o syscalls.o system.o
 
-SYS_S_SRC = src/C64/klibs.S
+SYS_S_SRC = klibs.S
 
-SYS_S_OBJ = src/C64/klibs.o
+SYS_S_OBJ = klibs.o
 
 SYS_SRCS = $(SYS_C_SRC) $(SYS_S_SRC)
 
 SYS_OBJS = $(SYS_C_OBJ) $(SYS_S_OBJ)
 
-USR_C_SRC = src/C64/ulibc.c src/C64/users.c
+USR_C_SRC = ulibc.c users.c
 
-USR_C_OBJ = src/C64/ulibc.o src/C64/users.o
+USR_C_OBJ = ulibc.o users.o
 
-USR_S_SRC = src/C64/ulibs.S
+USR_S_SRC = ulibs.S
 
-USR_S_OBJ = src/C64/ulibs.o
+USR_S_OBJ = ulibs.o
 
 USR_SRCS = $(USR_C_SRC) $(USR_S_SRC)
 USR_OBJS = $(USR_C_OBJ) $(USR_S_OBJ)
@@ -80,7 +78,7 @@ USER_OPTIONS = $(MAIN_OPTIONS) $(DBG_OPTIONS)
 #
 # We only want to include from the current directory and ~wrc/include
 #
-INCLUDES = -I. -I/home/comp_sci/capstone/include
+INCLUDES = -I. -I/home/fac/wrc/include
 
 #
 # Compilation/assembly/linking commands and options
@@ -141,18 +139,18 @@ LDFLAGS = -melf_x86_64
 
 # Binary/source file for system bootstrap code
 
-BOOT_OBJ = src/C64/bootstrap.b
-BOOT_SRC = src/C64/bootstrap.S
+BOOT_OBJ = bootstrap.b
+BOOT_SRC = bootstrap.S
 
 # Assembly language object/source files
 
-FMK_S_OBJ = src/C64/long_mode.o src/C64/startup.o src/C64/isr_stubs.o $(U_S_OBJ)
-FMK_S_SRC = src/C64/long_mode.S	src/C64/startup.S src/C64/isr_stubs.S $(U_S_SRC)
+FMK_S_OBJ = long_mode.o startup.o isr_stubs.o $(U_S_OBJ)
+FMK_S_SRC = long_mode.S	startup.S isr_stubs.S $(U_S_SRC)
 
 # C object/source files
 
-FMK_C_OBJ =	src/C64/c_io.o src/C64/support.o $(U_C_OBJ)
-FMK_C_SRC =	src/C64/c_io.c src/C64/support.c $(U_C_SRC)
+FMK_C_OBJ =	c_io.o support.o $(U_C_OBJ)
+FMK_C_SRC =	c_io.c support.c $(U_C_SRC)
 
 # Collections of files
 
@@ -162,92 +160,20 @@ FMK_SRCS = $(FMK_S_SRC) $(FMK_C_SRC)
 OBJECTS = $(FMK_OBJS) $(SYS_OBJS) $(USR_OBJS)
 SOURCES = $(FMK_SRCS) $(SYS_SRCS) $(USR_SRCS)
 
-TARGET ?= x86_64-uros
-RUST_FILES = target/$(TARGET)/debug/liburos.a
 
 #
-# Targets for remaking bootable image of the program
+# For top level Makefile
 #
-# Default target:  usb.image
-#
-
-parts:
-	+$(MAKE) -C src/C64
-
-rust:
-	@RUST_TARGET_PATH=$(shell pwd) xargo build --target $(TARGET)
-
-build/usb.image: src/C64/bootstrap.b build/prog.b build/prog.nl build/BuildImage build/prog.dis
-	build/BuildImage -d usb -o build/usb.image -b src/C64/bootstrap.b build/prog.b 0x10000
-
-build/floppy.image: src/C64/bootstrap.b build/prog.b prog.nl build/BuildImage prog.dis
-	build/BuildImage -d floppy -o build/floppy.image -b src/C64/bootstrap.b build/prog.b 0x10000
-
-build/prog.out: parts rust $(OBJECTS)
-	$(LD) $(LDFLAGS) -o build/prog.out $(OBJECTS) $(RUST_FILES)
-
-build/prog.o:	parts rust $(OBJECTS)
-	$(LD) $(LDFLAGS) -o build/prog.o -T linker.ld $(OBJECTS) $(U_LIBS) $(RUST_FILES)
-
-build/prog.b:	build/prog.o
-	$(LD) $(LDFLAGS) -o build/prog.b -s --oformat binary -T linker.ld build/prog.o
-
-#
-# Targets for copying bootable image onto boot devices
-#
-
-floppy:	build/floppy.image
-	dd if=floppy.image of=/dev/fd0
-
-usb:	build/usb.image
-	/home/jds/Desktop/dcopy build/usb.image
-
-qemu:   build/usb.image
-	qemu-system-x86_64 -hdb build/usb.image -serial stdio -device nec-usb-xhci -device usb-mouse -m 512
-
-qemu-output:   build/usb.image
-	qemu-system-x86_64 -hdb build/usb.image -serial stdio -device nec-usb-xhci -device usb-mouse -m 512 -d int,cpu_reset > out.txt 
-
-debug:   build/usb.image
-	qemu-system-x86_64 -s -S -hdb build/usb.image -serial stdio -device nec-usb-xhci -device usb-mouse -m 512
-
-#
-# Special rule for creating the modification and offset programs
-#
-# These are required because we don't want to use the same options
-# as for the standalone binaries.
-#
-
-build/BuildImage:	src/build_utils/BuildImage.c
-	$(CC) -o build/BuildImage src/build_utils/BuildImage.c
-
-# Doesn't work, I don't know :/
-Offsets:	src/build_utils/Offsets.c
-	$(CC) -mx32 -std=c99 $(INCLUDES) -o Offsets src/build_utils/Offsets.c
+all: $(OBJECTS)
 
 #
 # Clean out this directory
 #
 
 clean:
-	+$(MAKE) -C src/C64 clean
-	rm -f build/*.nl build/*.b build/*.o build/*.image build/*.dis build/BuildImage build/Offsets
+	rm -f *.X *.nl *.lst *.b *.o *.image *.dis *.s BuildImage Offsets
 
 realclean:	clean
-
-#
-# Create a printable namelist from the prog.o file
-#
-
-build/prog.nl: build/prog.o
-	nm -Bng build/prog.o | pr -w80 -3 > build/prog.nl
-
-#
-# Generate a disassembly
-#
-
-build/prog.dis: build/prog.o
-	objdump -d build/prog.o > build/prog.dis
 
 #
 #       makedepend is a program which creates dependency lists by

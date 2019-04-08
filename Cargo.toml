@@ -1,0 +1,10 @@
+[package]
+name = "uros"
+version = "0.1.0"
+authors = ["Jonathan Schenk <jds8899@rit.edu>"]
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+rlibc = "1.0"
