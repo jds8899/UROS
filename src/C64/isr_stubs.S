@@ -47,7 +47,7 @@ __isr_##vector:				; \
 	pushq	$vector			; \
 	jmp	isr_save
 
-	.globl	__isr_table
+	//.globl	__isr_table
 	.globl	__isr_restore
 
 /*
@@ -110,13 +110,13 @@ isr_save:
 /*
 ** MOD for 20175 CSCI452
 */
-
+/*
 	.globl	_current
 	.globl	_system_rsp
 
 	movq	_current, %rdx	// save context pointer for the current proc
 	movq	%rsp, (%rdx)	// *** must be the first field in the PCB
-
+*/
 	/*
 	** IMPORTANT NOTE:  this code is inherently non-reentrant!
 	**
@@ -124,9 +124,9 @@ isr_save:
 	** supports reentrant ISRs or interruptable ISRs, this code will
 	** need to be changed.
 	*/
-
+/*
 	movq	_system_rsp, %rsp	// switch to the OS stack
-
+*/
 /*
 ** END MOD for 20175 CSCI452
 */
@@ -139,8 +139,8 @@ isr_save:
 /*
 ** Call the ISR
 */
-	movq	__isr_table(,%rax,8),%rcx
-	call	*%rcx
+	//movq	__isr_table(,%rax,8),%rcx
+	//call	*%rcx
 	//addq	$16,%rsp		// pop the two parameters
 
 /*
@@ -152,10 +152,10 @@ __isr_restore:
 /*
 ** MOD for 20175 CSCI452
 */
-
+/*
 	movq	_current, %rdx	// return to user stack
 	movq	(%rdx), %rsp	// RSP now points to context save area
-
+*/
 /*
 ** END MOD for 20175 CSCI452
 */
@@ -184,7 +184,7 @@ __isr_restore:
 	** THE movw CONSTANTS MUST BE CHANGED IF THE LOCATION OF
 	** EITHER FIELD IN THE PCB CHANGES!
 	*/
-
+/*
 	.globl	_system_time
 
 	xor		%rax, %rax
@@ -193,17 +193,17 @@ __isr_restore:
 	movw	24(%rdx), %ax	// PID
 	movq	%rax, %r8
 	movl	_system_time, %ecx	// current system time
-
+*/
 /*
 ** END MOD for 20175 CSCI452
 */
-
+/*
 	movq	$fmt, %rdx
 	movq	$1, %rsi
 	movq	$0, %rdi
 	xor		%rax, %rax
 	call	c_printf_at
-
+*/
 /*
 ** MOD for 20175 CSCI452
 */

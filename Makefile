@@ -183,11 +183,11 @@ build/usb.image: src/C64/bootstrap.b build/prog.b build/prog.nl build/BuildImage
 build/floppy.image: src/C64/bootstrap.b build/prog.b prog.nl build/BuildImage prog.dis
 	build/BuildImage -d floppy -o build/floppy.image -b src/C64/bootstrap.b build/prog.b 0x10000
 
-build/prog.out: parts rust $(OBJECTS)
-	$(LD) $(LDFLAGS) -o build/prog.out $(OBJECTS) $(RUST_FILES)
+build/prog.out: rust $(FMK_S_OBJ)
+	$(LD) $(LDFLAGS) -o build/prog.out $(FMK_S_OBJ) $(RUST_FILES)
 
-build/prog.o:	parts rust $(OBJECTS)
-	$(LD) $(LDFLAGS) -o build/prog.o -T linker.ld $(OBJECTS) $(U_LIBS) $(RUST_FILES)
+build/prog.o:	rust $(FMK_S_OBJ)
+	$(LD) $(LDFLAGS) -o build/prog.o -T linker.ld $(FMK_S_OBJ) $(RUST_FILES)
 
 build/prog.b:	build/prog.o
 	$(LD) $(LDFLAGS) -o build/prog.b -s --oformat binary -T linker.ld build/prog.o

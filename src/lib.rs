@@ -2,6 +2,10 @@
 #![no_std]
 #![feature(const_fn)]
 
+#[macro_use]
+extern crate lazy_static;
+extern crate spin;
+
 mod c_io;
 
 use core::panic::PanicInfo;

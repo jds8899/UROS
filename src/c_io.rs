@@ -1,60 +1,229 @@
-//#[macro_use]
-//extern crate lazy_static;
-
 use core::ptr;
+use spin::Mutex;
+use lazy_static::lazy_static;
 
-const SCREEN_MIN_X:  usize = 0;
-const SCREEN_MIN_Y:  usize = 0;
-const SCREEN_SIZE_X: usize = 80;
-const SCREEN_SIZE_Y: usize = 25;
-const SCREEN_MAX_X: usize = SCREEN_SIZE_X - 1;
-const SCREEN_MAX_Y: usize = SCREEN_SIZE_Y - 1;
+extern "C" {
+    fn __outb(port:i32, value:i32);
+}
+
+const SCREEN_MIN_X:  u32 = 0;
+const SCREEN_MIN_Y:  u32 = 0;
+const SCREEN_SIZE_X: u32 = 80;
+const SCREEN_SIZE_Y: u32 = 25;
+const SCREEN_MAX_X: u32 = SCREEN_SIZE_X - 1;
+const SCREEN_MAX_Y: u32 = SCREEN_SIZE_Y - 1;
 
 pub struct Cio {
-    scroll_min_x: usize,
-    scroll_min_y: usize,
-    scroll_max_x: usize,
-    scroll_max_y: usize,
-    scroll_curr_x: usize,
-    scroll_curr_y: usize,
-    min_x: usize,
-    min_y: usize,
-    max_x: usize,
-    max_y: usize,
+    scroll_min_x: u32,
+    scroll_min_y: u32,
+    scroll_max_x: u32,
+    scroll_max_y: u32,
+    curr_x: u32,
+    curr_y: u32,
+    min_x: u32,
+    min_y: u32,
+    max_x: u32,
+    max_y: u32,
     buffer: &'static mut Buffer,
 }
 
 struct Buffer {
-    data: [[u16; SCREEN_SIZE_X]; SCREEN_SIZE_Y],
+    data: [[u16; (SCREEN_SIZE_X as usize)]; (SCREEN_SIZE_Y as usize)],
 }
 
 impl Cio {
-    pub fn __put_char_at(&mut self, x:usize, y:usize, c:u8) {
-        let addr = &mut self.buffer.data[x][y] as *mut u16;
-        let o_char = c as u16;
-        if c > 0xff {
-            unsafe { ptr::write_volatile(addr, o_char) };
+    fn bound(min:u32, val:u32, max:u32) -> u32 {
+        let mut ret = val;
+        if ret < min {
+            ret = min;
+        }
+        if ret > max {
+            ret = max;
+        }
+        return ret;
+    }
+
+    fn __c_putchar_at(&mut self, x:u32, y:u32, c:u8) {
+        if x < self.max_x && y <= self.max_y {
+            let addr = &mut self.buffer.data[y as usize][x as usize] as *mut u16;
+            let o_char = c as u16;
+            unsafe { ptr::write_volatile(addr, o_char | 0x0700) };
+        }
+    }
+
+    fn __c_setcursor(&mut self) {
+        let mut y = self.curr_y;
+
+        if y > self.scroll_max_y {
+            y = self.scroll_max_y;
+        }
+
+        let addr = (y as i32) * (SCREEN_SIZE_X as i32) + (self.curr_x as i32) as i32;
+
+        unsafe {
+            __outb(0x3d4, 0xe);
+            __outb(0x3d5, (addr >> 8) & 0xff);
+            __outb(0x3d4, 0xf);
+            __outb(0x3d5, addr & 0xff);
+        }
+    }
+
+    pub fn c_setscroll(&mut self, s_min_x:u32, s_min_y:u32, s_max_x:u32, s_max_y:u32) {
+        self.scroll_min_x = Cio::bound(self.min_x, s_min_x, self.max_x);
+        self.scroll_min_y = Cio::bound(self.min_y, s_min_y, self.max_y);
+        self.scroll_max_x = Cio::bound(self.scroll_min_x, s_max_x, self.max_x);
+        self.scroll_max_y = Cio::bound(self.scroll_min_y, s_max_y, self.max_y);
+        self.curr_x       = self.scroll_min_x;
+        self.curr_y       = self.scroll_min_y;
+        self.__c_setcursor();
+    }
+
+    pub fn c_moveto(&mut self, x:u32, y:u32) {
+        self.curr_x = Cio::bound(self.scroll_min_x, x + self.scroll_min_x, self.scroll_max_x);
+        self.curr_y = Cio::bound(self.scroll_min_y, y + self.scroll_min_y, self.scroll_max_y);
+        self.__c_setcursor();
+    }
+
+    pub fn c_putchar_at(&mut self, mut x:u32, y:u32, c:u8) {
+        if (c & 0x7f) == b'\n' {
+            let mut limit = 0 as u32;
+
+            if x > self.scroll_max_x {
+                limit = self.max_x;
+            }
+            else if x >= self.scroll_min_x {
+                limit = self.scroll_max_x;
+            }
+            else {
+                limit = self.scroll_min_x - 1;
+            }
+            while x < limit {
+                self.__c_putchar_at(x, y, b' ');
+                x += 1;
+            }
         }
         else {
-            unsafe { ptr::write_volatile(addr, o_char | 0x0700) };
+            self.__c_putchar_at(x, y, c);
+        }
+    }
+
+    pub fn c_putchar(&mut self, c:u8) {
+        if self.curr_y >= self.scroll_max_y {
+            let diff = self.curr_y - self.scroll_max_y + 1;
+            self.c_scroll(diff);
+            self.curr_y = self.scroll_max_y - 1;
+        }
+
+        let mut x = self.curr_x;
+        let y = self.curr_y;
+
+        match c {
+            b'\n' => {
+                while self.curr_x <= self.scroll_max_x {
+                    self.__c_putchar_at(x, y, b' ');
+                    self.curr_x += 1;
+                    x = self.curr_x;
+                }
+                self.curr_x  = self.scroll_min_x;
+                self.curr_y += 1;
+            }
+            b'\r' => {
+                self.curr_x = self.scroll_min_x;
+            }
+            c => {
+                self.__c_putchar_at(x, y, c);
+                self.curr_x += 1;
+                if self.curr_x > self.scroll_max_x {
+                    self.curr_x  = self.scroll_min_x;
+                    self.curr_y += 1;
+                }
+            }
+        }
+        self.__c_setcursor()
+    }
+
+    pub fn c_puts_at(&mut self, mut x:u32, mut y:u32, s: &str) {
+        for c in s.bytes() {
+            if x > self.max_x {continue};
+            self.c_putchar_at(x, y, c);
+            x += 1;
+        }
+    }
+
+    pub fn c_puts(&mut self, s: &str) {
+        for c in s.bytes() {
+            self.c_putchar(c);
+        }
+    }
+
+    pub fn c_clearscreen(&mut self) {
+        for y in 0..self.max_y {
+            for x in 0..self.max_x {
+                self.__c_putchar_at(x, y, b' ');
+            }
+        }
+    }
+
+    pub fn c_clearscroll(&mut self) {
+        for y in self.scroll_min_y..self.scroll_max_y {
+            for x in self.scroll_min_x..self.scroll_max_x {
+                self.__c_putchar_at(x, y, b' ');
+            }
+        }
+    }
+
+    pub fn c_scroll(&mut self, lines:u32) {
+        if lines > self.scroll_max_y - self.scroll_min_y {
+            self.c_clearscroll();
+            self.curr_x = self.scroll_min_x;
+            self.curr_y = self.scroll_min_y;
+            self.__c_setcursor();
+            return;
+        }
+
+        for y in self.scroll_min_y..(self.scroll_max_y - lines) {
+            for x in self.scroll_min_x..self.scroll_max_x {
+                let from = self.buffer.data[(y + lines) as usize][x as usize];
+                let to = &mut self.buffer.data[y as usize][x as usize] as *mut u16;
+                unsafe { ptr::write_volatile(to, from) };
+            }
+        }
+        for y in (self.scroll_max_y - lines)..self.scroll_max_y {
+            for x in self.scroll_min_x..self.scroll_max_x {
+                self.__c_putchar_at(x, y, b' ');
+            }
         }
     }
 }
 
-pub fn print_stuff() {
-    let mut writer = Cio {
+lazy_static! {
+    pub static ref WRITER: Mutex<Cio> = Mutex::new(Cio {
         scroll_min_x: 0,
         scroll_min_y: 0,
         scroll_max_x: 80,
         scroll_max_y: 25,
-        scroll_curr_x: 0,
-        scroll_curr_y: 0,
+        curr_x: 0,
+        curr_y: 0,
         min_x: 0,
         min_y: 0,
         max_x: 80,
         max_y: 25,
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
-    };
+    });
+}
 
-    writer.__put_char_at(20, 10, b'F');
+pub fn print_stuff() {
+
+    WRITER.lock().c_moveto(0, 0);
+    WRITER.lock().c_putchar(b'F');
+    //WRITER.lock().c_puts("hello\n");
+    WRITER.lock().c_setscroll(0,5, 80, 25);
+    WRITER.lock().c_clearscroll();
+    WRITER.lock().c_moveto(0,19);
+    WRITER.lock().c_puts("hello\n");
+    WRITER.lock().c_puts("hello");
+    //WRITER.lock().c_scroll(5);
+    //WRITER.lock().c_clearscreen();
+    //writer.__put_char_at(20, 10, b'F');
+    //writer.__c_setcursor();
 }

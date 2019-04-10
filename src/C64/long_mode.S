@@ -145,7 +145,7 @@ long_mode_entry:
 	call	rs_sys_init
 	hlt
 
-	call	_init
+	//call	_init
 	jmp	__isr_restore   // defined in isr_stubs.S
 
 	.code32
