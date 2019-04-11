@@ -18,7 +18,7 @@
 #include "bootstrap.h"
 #include "x86arch.h"
 #include "kmalloc.h"
-#include "c_io.h"
+//#include "c_io.h"
 
 /*
 ** PRIVATE DEFINITIONS
@@ -105,8 +105,8 @@ static void _add_block( uint64_t base, uint64_t length ) {
    block->info.next = NULL;
 
 #ifdef DEBUG_KMALLOC_FREELIST
-c_printf( "## _add_block(%016x,%d): addr %016x len %d\n",
-   base, length, (uint64_t) block, block->length );
+   //c_printf( "## _add_block(%016x,%d): addr %016x len %d\n",
+   //base, length, (uint64_t) block, block->length );
 #endif
    /*
    ** We maintain the free list in order by address, to simplify
@@ -153,7 +153,7 @@ c_printf( "## _add_block(%016x,%d): addr %016x len %d\n",
 
       if( curr == NULL ) {
          // oops!
-	 _kpanic( "_add_block", "empty non-empty free list?" );
+        //_kpanic( "_add_block", "empty non-empty free list?" );
       }
 
       _freelist = block;
@@ -182,13 +182,13 @@ c_printf( "## _add_block(%016x,%d): addr %016x len %d\n",
 void _dump_freelist( void ){
    Blockinfo *block;
 
-   c_printf( "&_freelist=%016x\n", &_freelist );
+   //c_printf( "&_freelist=%016x\n", &_freelist );
 
    for( block = _freelist; block != NULL; block = block->info.next ){
 
-      c_printf( "block=%016x length=%016x (ends at %016x)\nnext=%016x\n",
-          block, block->length, block->length * 8 + 8 + (uint64_t)block,
-          block->info.next );
+     //c_printf( "block=%016x length=%016x (ends at %016x)\nnext=%016x\n",
+     //    block, block->length, block->length * 8 + 8 + (uint64_t)block,
+     //     block->info.next );
    }
 
 }
@@ -207,7 +207,7 @@ void *_kmalloc( uint64_t desired_length ){
    Blockinfo **pointer;
 
 #ifdef DEBUG_KMALLOC
-c_printf( ">> kmalloc(%d)", desired_length );
+   //c_printf( ">> kmalloc(%d)", desired_length );
 #endif
    /*
    ** Convert the length to words (must round the count up to the next
@@ -216,7 +216,7 @@ c_printf( ">> kmalloc(%d)", desired_length );
    desired_length += WORD_SIZE - 1;
    desired_length >>= LOG2_OF_WORD_SIZE;
 #ifdef DEBUG_KMALLOC
-c_printf( ", len -> %d", desired_length );
+   //c_printf( ", len -> %d", desired_length );
 #endif
 
    /*
@@ -247,7 +247,7 @@ c_printf( ", len -> %d", desired_length );
       ** this one.
       */
 #ifdef DEBUG_KMALLOC
-c_printf( ", got %016x/%d", (uint64_t)block, block->length );
+     //c_printf( ", got %016x/%d", (uint64_t)block, block->length );
 #endif
       Blockinfo *fragment;
       uint64_t fragment_size;
@@ -268,8 +268,8 @@ c_printf( ", got %016x/%d", (uint64_t)block, block->length );
       *pointer = block->info.next;
    }
 #ifdef DEBUG_KMALLOC
-c_printf( ",\nreturns %016x/%d\n", (uint64_t) (&block->info.memory),
-   block->length );
+   //c_printf( ",\nreturns %016x/%d\n", (uint64_t) (&block->info.memory),
+   //block->length );
 #endif
    return &block->info.memory;
 }
@@ -412,8 +412,8 @@ void _km_init( void ){
    }
 
 #ifdef DEBUG_KMALLOC
-   c_printf( "+++ _km_init, _end %016x cutoff %016x\n", 
-      (uint64_t) &_end, (uint64_t) cutoff );
+   //c_printf( "+++ _km_init, _end %016x cutoff %016x\n", 
+   //(uint64_t) &_end, (uint64_t) cutoff );
 #endif
 
    // if there are no entries, we have nothing to do!
@@ -432,11 +432,11 @@ void _km_init( void ){
    for( int i = 0; i < entries; ++i, ++region ) {
 
 #if 0
-      c_printf( "#%2d: ", i );
-      c_printf( "B(%08x,%08x) L(%08x,%08x)",
-         region->base[1], region->base[0],
-         region->length[1], region->length[0] );
-      c_printf( " T(%08x) A(%08x)\n", region->type, region->acpi );
+     //c_printf( "#%2d: ", i );
+     // c_printf( "B(%08x,%08x) L(%08x,%08x)",
+     //    region->base[1], region->base[0],
+     //   region->length[1], region->length[0] );
+     // c_printf( " T(%08x) A(%08x)\n", region->type, region->acpi );
 #else
 
       /*
@@ -518,6 +518,6 @@ void _km_init( void ){
 
    // announce that we have completed initialization
 
-   c_puts( " KMEM" );
+   //c_puts( " KMEM" );
 
 }

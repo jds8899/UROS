@@ -1,4 +1,5 @@
 use core::ptr;
+use core::fmt;
 use spin::Mutex;
 use lazy_static::lazy_static;
 
@@ -196,6 +197,30 @@ impl Cio {
     }
 }
 
+impl fmt::Write for Cio {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        self.c_puts(s);
+        Ok(())
+    }
+}
+
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => ($crate::c_io::_print(format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! println {
+    () => ($crate::print!("\n"));
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+}
+
+#[doc(hidden)]
+pub fn _print(args: fmt::Arguments) {
+    use core::fmt::Write;
+    WRITER.lock().write_fmt(args).unwrap();
+}
+
 lazy_static! {
     pub static ref WRITER: Mutex<Cio> = Mutex::new(Cio {
         scroll_min_x: 0,
@@ -212,7 +237,7 @@ lazy_static! {
     });
 }
 
-pub fn print_stuff() {
+pub fn cio_test() {
 
     WRITER.lock().c_moveto(0, 0);
     WRITER.lock().c_putchar(b'F');

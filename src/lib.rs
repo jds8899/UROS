@@ -7,12 +7,13 @@ extern crate lazy_static;
 extern crate spin;
 
 mod c_io;
+mod interrupt;
 
 use core::panic::PanicInfo;
 
 #[no_mangle]
 pub extern fn rs_sys_init() {
-    c_io::print_stuff();
+    interrupt::__init_interrupts();
     loop{}
 }
 

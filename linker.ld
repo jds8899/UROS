@@ -17,7 +17,7 @@ SECTIONS
 	.debug_macinfo : { *(.debug_macinfo) }
 	.debug_pubtypes : { *(.debug_pubtypes) }
 	.debug_ranges : { *(.debug_ranges) }
-	.shstrtab : { 
+	.shstrtab : {
 		*(.shstrtab)
 		_end = .;
 	}

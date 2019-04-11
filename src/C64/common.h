@@ -140,18 +140,18 @@ typedef unsigned long long int	uint64_t;
 
 // OS needs the system headers and the kernel library headers
 
-#include "c_io.h"
-#include "kmalloc.h"
-#include "support.h"
-#include "system.h"
+//#include "c_io.h"
+//#include "kmalloc.h"
+//#include "support.h"
+//#include "system.h"
 
-#include "klib.h"
+//#include "klib.h"
 
 #else
 
 // User code needs only the user library headers
 
-#include "ulib.h"
+//#include "ulib.h"
 
 #endif
 

@@ -10,27 +10,25 @@
 #
 # User supplied files
 #
-SYS_C_SRC = clock.c klibc.c kmalloc.c pcbs.c queues.c scheduler.c \
-	sio.c stacks.c syscalls.c system.c
+SYS_C_SRC = kmalloc.c
 
-SYS_C_OBJ = clock.o klibc.o kmalloc.o pcbs.o queues.o scheduler.o \
-	sio.o stacks.o syscalls.o system.o
+SYS_C_OBJ = kmalloc.o
 
-SYS_S_SRC = klibs.S
+SYS_S_SRC =
 
-SYS_S_OBJ = klibs.o
+SYS_S_OBJ =
 
 SYS_SRCS = $(SYS_C_SRC) $(SYS_S_SRC)
 
 SYS_OBJS = $(SYS_C_OBJ) $(SYS_S_OBJ)
 
-USR_C_SRC = ulibc.c users.c
+USR_C_SRC =
 
-USR_C_OBJ = ulibc.o users.o
+USR_C_OBJ =
 
-USR_S_SRC = ulibs.S
+USR_S_SRC =
 
-USR_S_OBJ = ulibs.o
+USR_S_OBJ =
 
 USR_SRCS = $(USR_C_SRC) $(USR_S_SRC)
 USR_OBJS = $(USR_C_OBJ) $(USR_S_OBJ)

@@ -142,6 +142,7 @@ long_mode_entry:
 	movq	%rbp, %rsp	/* and stack pointer */
 
 	.extern	rs_sys_init
+  call  _km_init
 	call	rs_sys_init
 	hlt
 

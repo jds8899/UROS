@@ -18,6 +18,9 @@ SYS_C_OBJ = src/C64/clock.o src/C64/klibc.o src/C64/kmalloc.o src/C64/pcbs.o \
 	src/C64/queues.o src/C64/scheduler.o \
 	src/C64/sio.o src/C64/stacks.o src/C64/syscalls.o src/C64/system.o
 
+SYS_C_R_INTER_SRC = src/C64/kmalloc.c
+SYS_C_R_INTER_OBJ = src/C64/kmalloc.o
+
 SYS_S_SRC = src/C64/klibs.S
 
 SYS_S_OBJ = src/C64/klibs.o
@@ -183,11 +186,11 @@ build/usb.image: src/C64/bootstrap.b build/prog.b build/prog.nl build/BuildImage
 build/floppy.image: src/C64/bootstrap.b build/prog.b prog.nl build/BuildImage prog.dis
 	build/BuildImage -d floppy -o build/floppy.image -b src/C64/bootstrap.b build/prog.b 0x10000
 
-build/prog.out: rust $(FMK_S_OBJ)
-	$(LD) $(LDFLAGS) -o build/prog.out $(FMK_S_OBJ) $(RUST_FILES)
+build/prog.out: rust parts
+	$(LD) $(LDFLAGS) -o build/prog.out $(FMK_S_OBJ) $(RUST_FILES) $(SYS_C_R_INTER_OBJ)
 
-build/prog.o:	rust $(FMK_S_OBJ)
-	$(LD) $(LDFLAGS) -o build/prog.o -T linker.ld $(FMK_S_OBJ) $(RUST_FILES)
+build/prog.o:	rust parts
+	$(LD) $(LDFLAGS) -o build/prog.o -T linker.ld $(FMK_S_OBJ) $(RUST_FILES) $(SYS_C_R_INTER_OBJ)
 
 build/prog.b:	build/prog.o
 	$(LD) $(LDFLAGS) -o build/prog.b -s --oformat binary -T linker.ld build/prog.o
