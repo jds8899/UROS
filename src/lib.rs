@@ -8,6 +8,7 @@ extern crate spin;
 
 mod c_io;
 mod interrupt;
+mod x86arch;
 
 use core::panic::PanicInfo;
 
