@@ -133,15 +133,30 @@ isr_save:
 
 	//pushq	%rcx		// put them on the top of the stack ...
 	//pushq	%rax		// ... as parameters for the ISR
-	movq	%rax, %rdi
-	movq	%rcx, %rsi
+	movq	  %rax, %rdi
+  movq    %rax, %rdx
+	movq	  %rcx, %rsi
+	pushq	  %rdi
+	pushq   %rdx
+	pushq	  %rsi
 
 /*
 ** Call the ISR
 */
 	//movq	__isr_table(,%rax,8),%rcx
-	//call	*%rcx
-	//addq	$16,%rsp		// pop the two parameters
+  .extern  get_isr_table
+  call    get_isr_table
+  popq	  %rsi
+	popq    %rdx
+	popq	  %rdi
+  shl     $3, %rdx
+  add     %rdx, %rax
+  movq    %rax, %rcx
+  //movq    *%rax(,%rdi,8), %rcx
+	e:
+	  jmp e
+	call	*%rcx
+	//addq $16,%rsp // pop the two parameters
 
 /*
 ** Context restore begins here

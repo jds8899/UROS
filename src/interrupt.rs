@@ -39,9 +39,16 @@ struct Buffer {
 
 impl Interrupt {
     pub fn init_idt(&mut self) {
+        let mut idt_addr = unsafe { __isr_stub_table };
         for i in 0..ISR_TAB_USIZE {
-            unsafe { self.set_idt_entry(i, __isr_stub_table + (8 * i)) };
+            self.set_idt_entry(i, idt_addr);
             self.__install_isr(i, __default_unexpected_handler);
+            if i == 0x08 || (i >= 10 && i <= 14) || i == 17 {
+                idt_addr += 7;
+            }
+            else {
+                idt_addr += 9;
+            }
         }
 
         self.__install_isr(x86arch::INT_VEC_KEYBOARD, __default_expected_handler);
@@ -60,6 +67,12 @@ impl Interrupt {
         g.offset_31_16 = (handler >> 16) as u16 & 0xffff as u16;
         g.offset_63_32 = (handler >> 32) as u32 & 0xffffffff as u32;
         g.zero = 0x00000000;
+        if entry == 20 {
+            println!("{:X}", handler);
+            println!("{:X}", g.offset_15_0);
+            println!("{:X}", g.offset_31_16);
+            println!("{:X}", g.offset_63_32);
+        }
     }
 
     pub fn __install_isr(&mut self, vector:usize, handler:fn(i32, i32)) -> fn(i32, i32) {
@@ -86,14 +99,23 @@ impl Interrupt {
             __outb(x86arch::PIC_SLAVE_IMR_PORT, 0x00);
         }
     }
+
+    pub fn isr_tab(&mut self) -> u64 {
+        let raw = self.isr_table as *mut Buffer;
+        return raw as u64;
+    }
 }
 
 fn __default_unexpected_handler(vector:i32, code:i32) {
+    unsafe { asm!("CLI") };
     println!("\nVector: {:X}, Code: {:X}", vector, code);
+    loop {}
     //Panic
 }
 
+#[no_mangle]
 fn __default_expected_handler(vector:i32, code:i32) {
+    println!("\nVector: {:X}, Code: {:X}", vector, code);
     if vector >= 0x20 && vector < 0x30 {
         unsafe { __outb(x86arch::PIC_MASTER_CMD_PORT, x86arch::PIC_EOI) };
         if vector > 0x27 {
@@ -116,6 +138,14 @@ lazy_static! {
         isr_table: unsafe { &mut *(_kmalloc(ISR_TAB_SIZE * 8) as *mut Buffer) },
     });
 }
+
+#[no_mangle]
+pub fn get_isr_table() -> u64 {
+    let ret = INT.lock().isr_tab();
+    //println!("{:X}", ret);
+    return ret;
+}
+
 
 pub fn __init_interrupts() {
     INT.lock().init_idt();

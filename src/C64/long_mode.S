@@ -144,8 +144,10 @@ long_mode_entry:
 	.extern	rs_sys_init
   call  _km_init
 	call	rs_sys_init
-	hlt
+  sti
 
+l:
+  jmp l
 	//call	_init
 	jmp	__isr_restore   // defined in isr_stubs.S
 
