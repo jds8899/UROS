@@ -1,3 +1,18 @@
+pub static TIMER_BASE_PORT: i32 = 0x40;
+pub static TIMER_0_PORT: i32 = (TIMER_BASE_PORT);
+pub static TIMER_1_PORT: i32 = (TIMER_BASE_PORT + 1);
+pub static TIMER_2_PORT: i32 = (TIMER_BASE_PORT + 2);
+pub static TIMER_CONTROL_PORT: i32 = (TIMER_BASE_PORT + 3);
+
+pub static TIMER_MODE_0: i32 = 0x00;
+pub static TIMER_MODE_1: i32 = 0x02;
+pub static TIMER_MODE_2: i32 = 0x04;
+pub static TIMER_MODE_3: i32 = 0x06;
+pub static TIMER_MODE_4: i32 = 0x08;
+pub static TIMER_MODE_5: i32 = 0x0a;
+
+pub static TIMER_0_LOAD: i32 = 0x30;
+pub static TIMER_0_SQUARE: i32 = TIMER_MODE_3;
 
 pub static INT_VEC_KEYBOARD: usize = 0x21;
 pub static INT_VEC_TIMER: usize = 0x20;

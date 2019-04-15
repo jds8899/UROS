@@ -1,0 +1,2 @@
+pub static CLOCK_FREQUENCY: i32 = 1000;
+pub static TIMER_FREQUENCY: i32 = 1193182;

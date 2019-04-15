@@ -67,12 +67,6 @@ impl Interrupt {
         g.offset_31_16 = (handler >> 16) as u16 & 0xffff as u16;
         g.offset_63_32 = (handler >> 32) as u32 & 0xffffffff as u32;
         g.zero = 0x00000000;
-        if entry == 20 {
-            println!("{:X}", handler);
-            println!("{:X}", g.offset_15_0);
-            println!("{:X}", g.offset_31_16);
-            println!("{:X}", g.offset_63_32);
-        }
     }
 
     pub fn __install_isr(&mut self, vector:usize, handler:fn(i32, i32)) -> fn(i32, i32) {
@@ -134,7 +128,7 @@ fn __default_mystery_handler(vector:i32, code:i32) {
 }
 
 lazy_static! {
-    static ref INT: Mutex<Interrupt> = Mutex::new(Interrupt {
+    pub static ref INT: Mutex<Interrupt> = Mutex::new(Interrupt {
         isr_table: unsafe { &mut *(_kmalloc(ISR_TAB_SIZE * 8) as *mut Buffer) },
     });
 }
