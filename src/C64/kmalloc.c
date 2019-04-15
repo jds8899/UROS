@@ -408,7 +408,7 @@ void _km_init( void ){
 
    if( cutoff & 0xffff ) {
    	  cutoff &= 0xffffffffffff0000;
-	  cutoff += 0x0000000000010000;
+      cutoff += 0x0000000000010000;
    }
 
 #ifdef DEBUG_KMALLOC

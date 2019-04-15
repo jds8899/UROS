@@ -151,10 +151,8 @@ isr_save:
 	popq	  %rdi
   shl     $3, %rdx
   add     %rdx, %rax
-  movq    %rax, %rcx
+  movq    (%rax), %rcx
   //movq    *%rax(,%rdi,8), %rcx
-	e:
-	  jmp e
 	call	*%rcx
 	//addq $16,%rsp // pop the two parameters
 
