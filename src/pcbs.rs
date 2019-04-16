@@ -7,7 +7,7 @@ use crate::x86arch;
 use crate::common;
 use crate::c_io;
 
-enum e_states {
+pub enum e_states {
     ST_UNUSED,
     ST_NEW,
     ST_RUNNING,
@@ -22,43 +22,43 @@ enum e_states {
 #[no_mangle]
 #[repr(C)]
 pub struct Context {
-    r15: u64,
-    r14: u64,
-    r13: u64,
-    r12: u64,
-    r11: u64,
-    r10: u64,
-    r9: u64,
-    r8: u64,
-    rdx: u64,
-    rcx: u64,
-    rbx: u64,
-    rax: u64,
-    rdi: u64,
-    rsi: u64,
-    rbp: u64,
-    vector: u64,
-    code: u64,
-    rip: u64,
-    rcs: u64,
-    rflags: u64,
-    rsp: u64,
-    ss: u64,
+    pub r15: u64,
+    pub r14: u64,
+    pub r13: u64,
+    pub r12: u64,
+    pub r11: u64,
+    pub r10: u64,
+    pub r9: u64,
+    pub r8: u64,
+    pub rdx: u64,
+    pub rcx: u64,
+    pub rbx: u64,
+    pub rax: u64,
+    pub rdi: u64,
+    pub rsi: u64,
+    pub rbp: u64,
+    pub vector: u64,
+    pub code: u64,
+    pub rip: u64,
+    pub cs: u64,
+    pub rflags: u64,
+    pub rsp: u64,
+    pub ss: u64,
 }
 
 #[no_mangle]
 #[repr(C)]
 pub struct Pcb {
-    cxt: Context,
+    pub cxt: Context,
     //stack: Stack,
 
-    event: u32,
-    exitstatus: u32,
+    pub event: u32,
+    pub exitstatus: u32,
 
-    pid: u16,
-    ppid: u16,
-    children: u16,
+    pub pid: u16,
+    pub ppid: u16,
+    pub children: u16,
 
-    state: e_states,
-    ticks: u8,
+    pub state: e_states,
+    pub ticks: u8,
 }
