@@ -13,6 +13,7 @@ mod interrupt;
 mod x86arch;
 mod common;
 mod clock;
+mod pcbs;
 
 use core::panic::PanicInfo;
 
@@ -26,6 +27,7 @@ pub extern fn rs_sys_init() {
     c_io::WRITER.lock().c_puts("Modules:\n");
     interrupt::__init_interrupts();
     clock::_clk_init();
+    pcbs::_pcb_init();
     //loop{}
 }
 
