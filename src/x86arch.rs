@@ -1,3 +1,6 @@
+pub static EFLAGS_MB1: i32 = 0x00000002;
+pub static EFLAGS_IF: i32 = 0x00000200;
+
 pub static TIMER_BASE_PORT: i32 = 0x40;
 pub static TIMER_0_PORT: i32 = (TIMER_BASE_PORT);
 pub static TIMER_1_PORT: i32 = (TIMER_BASE_PORT + 1);

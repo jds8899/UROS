@@ -187,10 +187,10 @@ build/floppy.image: src/C64/bootstrap.b build/prog.b prog.nl build/BuildImage pr
 	build/BuildImage -d floppy -o build/floppy.image -b src/C64/bootstrap.b build/prog.b 0x10000
 
 build/prog.out: rust parts
-	$(LD) $(LDFLAGS) -o build/prog.out $(FMK_S_OBJ) $(RUST_FILES) $(SYS_C_R_INTER_OBJ)
+	$(LD) $(LDFLAGS) -o build/prog.out $(FMK_S_OBJ) $(RUST_FILES) $(SYS_C_R_INTER_OBJ) $(USR_S_OBJ)
 
 build/prog.o:	rust parts
-	$(LD) $(LDFLAGS) -o build/prog.o -T linker.ld $(FMK_S_OBJ) $(RUST_FILES) $(SYS_C_R_INTER_OBJ)
+	$(LD) $(LDFLAGS) -o build/prog.o -T linker.ld $(FMK_S_OBJ) $(RUST_FILES) $(SYS_C_R_INTER_OBJ) $(USR_S_OBJ)
 
 build/prog.b:	build/prog.o
 	$(LD) $(LDFLAGS) -o build/prog.b -s --oformat binary -T linker.ld build/prog.o

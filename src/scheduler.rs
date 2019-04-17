@@ -99,6 +99,11 @@ impl Scheduler {
         self.procs.data[self.current as usize].state = pcbs::e_states::ST_RUNNING;
         self.procs.data[self.current as usize].ticks = QUANTUM_STD;
     }
+
+    pub fn get_curr(&mut self) -> u64 {
+        let curr = self.procs.data[self.current] as *mut Pcb;
+        return curr as u64;
+    }
 }
 
 lazy_static! {
@@ -108,4 +113,9 @@ lazy_static! {
         in_use: 0,
         current: 0,
     });
+}
+
+#[no_mangle]
+pub fn get_curr_wrap() -> u64 {
+    return SCHED.lock().get_curr();
 }
