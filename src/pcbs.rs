@@ -6,6 +6,7 @@ use crate::println;
 use crate::x86arch;
 use crate::common;
 use crate::c_io;
+use crate::stacks::StkBuffer;
 
 pub enum e_states {
     ST_UNUSED,
@@ -17,6 +18,21 @@ pub enum e_states {
     ST_KILLED,
     ST_ZOMBIE,
     ST_READY  // must always be last!
+}
+
+pub const PID_INIT: u16 = 1;
+const PID_FIRST: u16 = 100;
+
+pub struct Pids {
+    curr: u16,
+}
+
+impl Pids {
+    pub fn get_next_pid(&mut self) -> u16 {
+        let ret = self.curr;
+        self.curr += 1;
+        return ret;
+    }
 }
 
 #[no_mangle]
@@ -49,8 +65,8 @@ pub struct Context {
 #[no_mangle]
 #[repr(C)]
 pub struct Pcb {
-    pub cxt: Context,
-    //stack: Stack,
+    pub cxt: &'static mut Context,
+    pub stack: &'static mut StkBuffer,
 
     pub event: u32,
     pub exitstatus: u32,
@@ -61,4 +77,10 @@ pub struct Pcb {
 
     pub state: e_states,
     pub ticks: u8,
+}
+
+lazy_static! {
+    pub static ref PID: Mutex<Pids> = Mutex::new(Pids {
+        curr: PID_FIRST,
+    });
 }

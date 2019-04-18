@@ -152,9 +152,11 @@ impl Cio {
     }
 
     pub fn c_puts(&mut self, s: &str) {
+        //unsafe { asm!("CLI") };
         for c in s.bytes() {
             self.c_putchar(c);
         }
+        //unsafe { asm!("STI") };
     }
 
     pub fn c_clearscreen(&mut self) {

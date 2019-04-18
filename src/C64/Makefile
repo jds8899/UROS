@@ -26,9 +26,9 @@ USR_C_SRC =
 
 USR_C_OBJ =
 
-USR_S_SRC =
+USR_S_SRC = ulibs.S
 
-USR_S_OBJ =
+USR_S_OBJ = ulibs.o
 
 USR_SRCS = $(USR_C_SRC) $(USR_S_SRC)
 USR_OBJS = $(USR_C_OBJ) $(USR_S_OBJ)

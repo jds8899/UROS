@@ -126,7 +126,7 @@ static void _clk_isr( int vector, int ecode ) {
       // see if there's another one to wake up
       pcb = (pcb_t *) _q_peek( _sleeping );
    }
-   
+
    // check the current process to see if it needs to be scheduled
 
    _current->ticks -= 1;

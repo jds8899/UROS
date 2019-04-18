@@ -6,6 +6,9 @@ use crate::println;
 use crate::x86arch;
 use crate::common;
 use crate::interrupt;
+use crate::scheduler;
+use crate::pcbs;
+use crate::stacks;
 use crate::c_io;
 
 extern "C" {
@@ -48,8 +51,19 @@ impl Clock {
 }
 
 pub fn _clk_isr(vector:i32, code:i32) {
-    CLK.lock().pin_deal();
+    //CLK.lock().pin_deal();
     CLK.lock().incr_time();
+
+    let curr = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };
+    let cxt = (curr.cxt as *mut pcbs::Context) as u64;
+    let stk = (curr.stack as *mut stacks::StkBuffer) as u64;
+    curr.ticks -= 1;
+    if curr.ticks < 1 {
+        scheduler::SCHED.lock()._schedule(cxt, stk, curr.event,
+                                          curr.exitstatus, curr.pid, curr.ppid, curr.children);
+        scheduler::SCHED.lock().dispatch();
+    }
+
     //println!("{:X}",CLK.lock().get_time());
     unsafe { __outb(x86arch::PIC_MASTER_CMD_PORT, x86arch::PIC_EOI) };
 }

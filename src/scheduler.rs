@@ -7,6 +7,7 @@ use crate::println;
 use crate::x86arch;
 use crate::pcbs::Pcb;
 use crate::pcbs;
+use crate::stacks;
 
 extern "C" {
     #[no_mangle]
@@ -32,7 +33,8 @@ struct Procs {
 }
 
 impl Scheduler {
-    pub fn _schedule(&mut self, pcb: &Pcb) {
+    pub fn _schedule(&mut self, cxt: u64, stk:u64, event:u32, extst:u32,
+                     pid:u16, ppid:u16, children:u16) {
         let mut next = 0 as usize;
         if self.in_use == 0 {
             next = 0;
@@ -53,6 +55,7 @@ impl Scheduler {
         }
         self.in_use += 1;
 
+        /*
         // Misery
         self.procs.data[next].cxt.r15    = pcb.cxt.r15;
         self.procs.data[next].cxt.r14    = pcb.cxt.r14;
@@ -76,18 +79,27 @@ impl Scheduler {
         self.procs.data[next].cxt.rflags = pcb.cxt.rflags;
         self.procs.data[next].cxt.rsp    = pcb.cxt.rsp;
         self.procs.data[next].cxt.ss     = pcb.cxt.ss;
-        //TODO stack
-        self.procs.data[next].event      = pcb.event;
-        self.procs.data[next].exitstatus = pcb.exitstatus;
+        */
 
-        self.procs.data[next].pid        = pcb.pid;
-        self.procs.data[next].ppid       = pcb.ppid;
-        self.procs.data[next].children   = pcb.children;
+        unsafe {
+            self.procs.data[next].cxt        = &mut *(cxt as *mut pcbs::Context);
+
+            self.procs.data[next].stack      = &mut *(stk as *mut stacks::StkBuffer);
+        }
+
+        self.procs.data[next].event      = event;
+        self.procs.data[next].exitstatus = extst;
+
+        self.procs.data[next].pid        = pid;
+        self.procs.data[next].ppid       = ppid;
+        self.procs.data[next].children   = children;
 
         self.procs.data[next].state = pcbs::e_states::ST_READY;
     }
 
     pub fn dispatch(&mut self) {
+        self.proc_stat.data[self.current as usize] = 0;
+        self.in_use -= 1;
         for i in 1..NUM_PROC {
             let next_ind = ((i + self.current) % NUM_PROC) as usize;
             if self.proc_stat.data[next_ind] == 1 && next_ind != self.current as usize {
@@ -100,9 +112,28 @@ impl Scheduler {
         self.procs.data[self.current as usize].ticks = QUANTUM_STD;
     }
 
-    pub fn get_curr(&mut self) -> u64 {
-        let curr = self.procs.data[self.current] as *mut Pcb;
+    pub fn get_curr_cxt(&mut self) -> u64 {
+        let curr = &mut *(self.procs.data[self.current as usize].cxt) as *mut pcbs::Context;
         return curr as u64;
+    }
+
+    pub fn get_curr(&mut self) -> u64 {
+        let curr = &mut (self.procs.data[self.current as usize]) as *mut Pcb;
+        return curr as u64;
+    }
+
+    pub fn set_curr_cxt(&mut self, rsp:u64) {
+        self.procs.data[self.current as usize].cxt = unsafe { &mut *(rsp as *mut pcbs::Context) };
+    }
+
+    pub fn dump_curr(&mut self) {
+        let curr = &self.procs.data[self.current as usize];
+        println!("cxt: {:p}",curr.cxt);
+        println!("rsp: {:x}",curr.cxt.rsp);
+        println!("stk: {:p}",curr.stack);
+        println!("pid: {:x}",curr.pid);
+        println!("ppid: {:x}",curr.ppid);
+        println!("children: {:x}",curr.children);
     }
 }
 
@@ -116,6 +147,11 @@ lazy_static! {
 }
 
 #[no_mangle]
-pub fn get_curr_wrap() -> u64 {
-    return SCHED.lock().get_curr();
+pub fn get_curr_cxt_wrap() -> u64 {
+    return SCHED.lock().get_curr_cxt();
+}
+
+#[no_mangle]
+pub fn set_curr_cxt_wrap(rsp:u64) {
+    return SCHED.lock().set_curr_cxt(rsp);
 }

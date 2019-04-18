@@ -104,8 +104,10 @@ isr_save:
 **
 ** Set up parameters for the ISR call.
 */
-	movq	120(%rsp),%rax	// get vector number and error code
-	movq	128(%rsp),%rcx
+	movq	120(%rsp), %rax	// get vector number and error code
+	movq	128(%rsp), %rcx
+  movq  %rax, vec
+  movq  %rcx, cod
 
 /*
 ** MOD for 20175 CSCI452
@@ -113,10 +115,17 @@ isr_save:
 /*
 	.globl	_current
 	.globl	_system_rsp
-
-	movq	_current, %rdx	// save context pointer for the current proc
-	movq	%rsp, (%rdx)	// *** must be the first field in the PCB
 */
+  .extern get_curr_cxt_wrap
+  .extern set_curr_cxt_wrap
+  .extern get_rsp_wrap
+
+  movq  %rsp, %rdi
+  call  set_curr_cxt_wrap
+
+	//movq	_current, %rdx	// save context pointer for the current proc
+	//movq	%rsp, (%rdx)	// *** must be the first field in the PCB
+
 	/*
 	** IMPORTANT NOTE:  this code is inherently non-reentrant!
 	**
@@ -127,12 +136,16 @@ isr_save:
 /*
 	movq	_system_rsp, %rsp	// switch to the OS stack
 */
+  call  get_rsp_wrap
+  movq  %rax, %rsp
 /*
 ** END MOD for 20175 CSCI452
 */
 
 	//pushq	%rcx		// put them on the top of the stack ...
 	//pushq	%rax		// ... as parameters for the ISR
+  movq	  vec, %rax	// get vector number and error code
+	movq	  cod, %rcx
 	movq	  %rax, %rdi
   movq    %rax, %rdx
 	movq	  %rcx, %rsi
@@ -165,6 +178,11 @@ __isr_restore:
 /*
 ** MOD for 20175 CSCI452
 */
+
+  	call  get_curr_cxt_wrap
+	  movq  %rax, %rdx
+	  movq  %rdx, %rsp
+
 /*
 	movq	_current, %rdx	// return to user stack
 	movq	(%rdx), %rsp	// RSP now points to context save area
@@ -266,6 +284,11 @@ fmt:	.ascii	"time %08x pid %5d     ppid %5d\n"
 		.ascii	"r9  =%08x r8 =%08x rdx=%08x rcx=%08x rbx=%08x rax=%08x\n"
 		.ascii	"rdi =%08x rsi=%08x rbp=%08x cod=%08x vec=%08x\n"
 		.string	"rip =%08x cs =%08x rfl=%08x rsp=%08x\n"
+
+vec:
+  .quad 0x000000000000000
+cod:
+	.quad 0x000000000000000
 /*
 ** END MOD for Capstone
 */
