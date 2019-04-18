@@ -36,13 +36,15 @@ pub extern fn rs_sys_init() {
     interrupt::__init_interrupts();
     clock::_clk_init();
     stacks::_stk_init();
+    scheduler::_scheduler_init();
     let entry = (users::init as *mut fn()->i32) as u64;
     let stk_addr = stacks::stk_alloc();
     let stk = unsafe { &mut *(stk_addr as *mut stacks::StkBuffer) };
     println!("stk_addr {:x}", stk_addr);
     let cxt = stacks::_stk_setup(stk, entry);
-    scheduler::SCHED.lock()._schedule(cxt, stk_addr, 0, 0, pcbs::PID_INIT, pcbs::PID_INIT, 0);
-    scheduler::SCHED.lock().dispatch();
+    scheduler::SCHED.lock()._add_proc(cxt, stk_addr, 0, 0, pcbs::PID_INIT, pcbs::PID_INIT, 0);
+    scheduler::SCHED.lock()._schedule(0);
+    scheduler::SCHED.lock()._dispatch();
     scheduler::SCHED.lock().dump_curr();
     //loop{}
 }
@@ -54,6 +56,6 @@ pub extern fn eh_personality() {}
 #[panic_handler]
 #[no_mangle]
 pub fn panic(_info: &PanicInfo) -> ! {
-    println!{"ded"};
+    println!{"{}", _info};
     loop{}
 }

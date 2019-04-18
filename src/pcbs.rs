@@ -77,6 +77,7 @@ pub struct Pcb {
 
     pub state: e_states,
     pub ticks: u8,
+    pub spot: i8,
 }
 
 lazy_static! {

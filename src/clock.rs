@@ -59,9 +59,8 @@ pub fn _clk_isr(vector:i32, code:i32) {
     let stk = (curr.stack as *mut stacks::StkBuffer) as u64;
     curr.ticks -= 1;
     if curr.ticks < 1 {
-        scheduler::SCHED.lock()._schedule(cxt, stk, curr.event,
-                                          curr.exitstatus, curr.pid, curr.ppid, curr.children);
-        scheduler::SCHED.lock().dispatch();
+        scheduler::SCHED.lock()._schedule(curr.spot);
+        scheduler::SCHED.lock()._dispatch();
     }
 
     //println!("{:X}",CLK.lock().get_time());
