@@ -68,7 +68,7 @@ pub fn _clk_isr(vector:i32, code:i32) {
 }
 
 lazy_static! {
-    static ref CLK: Mutex<Clock> = Mutex::new(Clock {
+    pub static ref CLK: Mutex<Clock> = Mutex::new(Clock {
         pinwheel: (common::CLOCK_FREQUENCY / 10) - 1,
         pindex: 0,
         system_time: 0,

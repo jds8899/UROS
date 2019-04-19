@@ -17,6 +17,8 @@ mod pcbs;
 mod scheduler;
 mod stacks;
 mod users;
+mod ulibs;
+mod syscalls;
 
 use core::panic::PanicInfo;
 
@@ -37,6 +39,7 @@ pub extern fn rs_sys_init() {
     clock::_clk_init();
     stacks::_stk_init();
     scheduler::_scheduler_init();
+    syscalls::_syscall_init();
     let entry = (users::init as *mut fn()->i32) as u64;
     let stk_addr = stacks::stk_alloc();
     let stk = unsafe { &mut *(stk_addr as *mut stacks::StkBuffer) };

@@ -1,8 +1,11 @@
 use crate::println;
+use crate::ulibs;
 
 #[no_mangle]
 pub fn init() -> i32 {
-    loop{println!("hi")}
+    let time = ulibs::sys_time();
+    println!("{}", time);
+    loop{}
 
     return 1;
 }

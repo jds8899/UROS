@@ -25,8 +25,9 @@ pub fn sys_exec() {
     unsafe { exec() };
 }
 
-pub fn sys_time() {
+pub fn sys_time() -> u64 {
     unsafe { time() };
+    return 0;
 }
 
 pub fn sys_pid() {

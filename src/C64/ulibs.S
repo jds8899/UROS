@@ -12,7 +12,24 @@
 
 #define	__SP_ASM__
 
-#include "syscalls.h"
+//#include "syscalls.h"
+
+// This is really awful, but I'm running out of time and getting weird linker errors
+SYS_exit:
+  .quad 1
+SYS_fork:
+  .quad 2
+SYS_exec:
+  .quad 3
+SYS_time:
+  .quad 4
+SYS_pid:
+  .quad 5
+SYS_ppid:
+  .quad 6
+INT_VEC_SYSCALL:
+  .byte 0x42
+
 
 /*
 ** System call stubs
@@ -32,30 +49,30 @@
 	.globl	name			; \
 name:					; \
 	movq	$SYS_##name, %rax	; \
-	int	$INT_VEC_SYSCALL	; \
+	int	$0x42	; \
 	ret
 
 SYSCALL(exit)
-SYSCALL(read)
-SYSCALL(write)
+//SYSCALL(read)
+//SYSCALL(write)
 SYSCALL(fork)
 SYSCALL(exec)
-SYSCALL(kill)
-SYSCALL(wait)
-SYSCALL(sleep)
+//SYSCALL(kill)
+//SYSCALL(wait)
+//SYSCALL(sleep)
 SYSCALL(time)
 SYSCALL(pid)
 SYSCALL(ppid)
-SYSCALL(get_prio)
-SYSCALL(set_prio)
-SYSCALL(dumpme)
+//SYSCALL(get_prio)
+//SYSCALL(set_prio)
+//SYSCALL(dumpme)
 
 /*
 ** This is a bogus system call; it's here so that we can test
 ** our handling of out-of-range syscall codes in the syscall ISR.
 */
 
-SYSCALL(bogus)
+//SYSCALL(bogus)
 
 /*
 ** do_exit()
