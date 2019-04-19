@@ -16,12 +16,12 @@ extern "C" {
     fn __outb(port:i32, value:i32);
 }
 
-static SYS_exit: usize = 0;
-static SYS_fork: usize = 1;
-static SYS_exec: usize = 2;
-static SYS_time: usize = 3;
-static SYS_pid:  usize = 4;
-static SYS_ppid: usize = 5;
+const SYS_exit: usize = 0;
+const SYS_fork: usize = 1;
+const SYS_exec: usize = 2;
+const SYS_time: usize = 3;
+const SYS_pid:  usize = 4;
+const SYS_ppid: usize = 5;
 
 const NUM_SYSCALLS: usize = 6;
 
@@ -57,19 +57,23 @@ fn _sys_fork() {}
 fn _sys_exec() {}
 
 fn _sys_time() {
-    println!("fuck");
     let curr = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };
     curr.cxt.rax = clock::CLK.lock().get_time();
 }
 
-fn _sys_pid() {}
+fn _sys_pid() {
+    let curr = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };
+    curr.cxt.rax = curr.pid as u64;
+}
 
-fn _sys_ppid() {}
+fn _sys_ppid() {
+    let curr = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };
+    curr.cxt.rax = curr.ppid as u64;
+}
 
 fn _sys_isr(vector:i32, ecode:i32) {
     let curr = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };
     let mut code = curr.cxt.rax as usize;
-    println!("code {}", code);
 
     if(code >= NUM_SYSCALLS) {
         code = SYS_exit;

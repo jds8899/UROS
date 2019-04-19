@@ -6,11 +6,11 @@ extern "C" {
     #[no_mangle]
     fn exec();
     #[no_mangle]
-    fn time();
+    fn time() -> u64;
     #[no_mangle]
-    fn pid();
+    fn pid() -> u16;
     #[no_mangle]
-    fn ppid();
+    fn ppid() -> u16;
 }
 
 pub fn sys_exit() {
@@ -25,15 +25,16 @@ pub fn sys_exec() {
     unsafe { exec() };
 }
 
+#[no_mangle]
 pub fn sys_time() -> u64 {
-    unsafe { time() };
-    return 0;
+    let time = unsafe { time() };
+    return time;
 }
 
-pub fn sys_pid() {
-    unsafe { pid() };
+pub fn sys_pid() -> u16 {
+    return unsafe { pid() };
 }
 
-pub fn sys_ppid() {
-    unsafe { ppid() };
+pub fn sys_ppid() -> u16 {
+    return unsafe { ppid() };
 }

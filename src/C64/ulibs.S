@@ -15,20 +15,13 @@
 //#include "syscalls.h"
 
 // This is really awful, but I'm running out of time and getting weird linker errors
-SYS_exit:
-  .quad 1
-SYS_fork:
-  .quad 2
-SYS_exec:
-  .quad 3
-SYS_time:
-  .quad 4
-SYS_pid:
-  .quad 5
-SYS_ppid:
-  .quad 6
-INT_VEC_SYSCALL:
-  .byte 0x42
+SYS_exit = 0x0
+SYS_fork = 0x1
+SYS_exec = 0x2
+SYS_time = 0x3
+SYS_pid = 0x4
+SYS_ppid = 0x5
+INT_VEC_SYSCALL = 0x42
 
 
 /*
