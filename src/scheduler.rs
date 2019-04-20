@@ -14,7 +14,7 @@ extern "C" {
     fn _kmalloc(size:u64) -> usize;
 }
 
-pub static NUM_PROC: u8 = 8;
+pub const NUM_PROC: u8 = 8;
 const QUANTUM_STD: u8 = 5;
 
 pub struct Scheduler {
@@ -50,7 +50,7 @@ impl Scheduler {
         }
         else if self.in_use == NUM_PROC {
             //None
-            return;
+            return 9;
         }
         else {
             for i in 1..NUM_PROC {

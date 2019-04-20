@@ -1,10 +1,11 @@
+use crate::println;
 extern "C" {
     #[no_mangle]
     fn exit();
     #[no_mangle]
-    fn fork();
+    fn fork() -> u16;
     #[no_mangle]
-    fn exec();
+    fn exec(entry:u64) -> u16;
     #[no_mangle]
     fn time() -> u64;
     #[no_mangle]
@@ -17,18 +18,17 @@ pub fn sys_exit() {
     unsafe { exit() };
 }
 
-pub fn sys_fork() {
-    unsafe { fork() };
+pub fn sys_fork() -> u16 {
+    return unsafe { fork() };
 }
 
-pub fn sys_exec() {
-    unsafe { exec() };
+pub fn sys_exec(entry:u64) -> u16{
+    return unsafe { exec(entry) };
 }
 
 #[no_mangle]
 pub fn sys_time() -> u64 {
-    let time = unsafe { time() };
-    return time;
+    return unsafe { time() };
 }
 
 pub fn sys_pid() -> u16 {
@@ -37,4 +37,13 @@ pub fn sys_pid() -> u16 {
 
 pub fn sys_ppid() -> u16 {
     return unsafe { ppid() };
+}
+
+pub fn spawn(entry:u64) {
+    let new = sys_fork();
+    //println!("{}",new);
+    if new != 0 {
+        return;
+    }
+    sys_exec(entry);
 }

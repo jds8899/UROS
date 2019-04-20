@@ -65,11 +65,11 @@ pub fn stk_alloc() -> u64 {
     return unsafe { _kmalloc(STACK_SIZE as u64 * 8) as u64};
 }
 
-pub fn stk_copy(s1:u64, s2:u64) {
-    let s1_buff unsafe { &mut *(s1 as *mut StkBuffer) };
-    let s2_buff unsafe { &mut *(s2 as *mut StkBuffer) };
+pub fn stk_copy(src:u64, dst:u64) {
+    let src_buff = unsafe { &mut *(src as *mut StkBuffer) };
+    let dst_buff = unsafe { &mut *(dst as *mut StkBuffer) };
     for i in 0..STACK_SIZE {
-        s1_buff[i] = s2_buff[i];
+        dst_buff.data[i] = src_buff.data[i];
     }
 }
 
@@ -79,7 +79,7 @@ pub fn _stk_setup(s: &'static mut StkBuffer, entry: u64) -> u64 {
     s.data[STACK_SIZE - 2] = unsafe { do_exit };
     println!("zero {}, exit {:x}, entry {:x}", s.data[STACK_SIZE - 1], s.data[STACK_SIZE - 2], entry);
 
-    let ptr = (&mut s.data[STACK_SIZE - 3] as *mut u64) as u64;
+    let ptr = (&mut s.data[STACK_SIZE - 2] as *mut u64) as u64;
     let ret = ptr - mem::size_of::<pcbs::Context>() as u64;
     let cxt = unsafe { &mut *(ret as *mut Context) };
 

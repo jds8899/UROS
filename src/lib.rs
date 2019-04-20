@@ -43,7 +43,7 @@ pub extern fn rs_sys_init() {
     let entry = (users::init as *mut fn()->i32) as u64;
     let stk_addr = stacks::stk_alloc();
     let stk = unsafe { &mut *(stk_addr as *mut stacks::StkBuffer) };
-    println!("stk_addr {:x}", stk_addr);
+    //println!("stk_addr {:x}", stk_addr);
     let cxt = stacks::_stk_setup(stk, entry);
     scheduler::SCHED.lock()._add_proc(cxt, stk_addr, 0, 0, pcbs::PID_INIT, pcbs::PID_INIT, 0);
     scheduler::SCHED.lock()._schedule(0);

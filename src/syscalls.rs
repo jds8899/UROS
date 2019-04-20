@@ -55,38 +55,69 @@ fn _sys_exit() {}
 
 fn _sys_fork() {
     let in_use = scheduler::SCHED.lock().get_in_use();
-    if in_use >= NUM_PROC  {
+    if in_use >= scheduler::NUM_PROC  {
         //TODO error too many proc
         return;
     }
 
     let curr     = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };
-    let curr_stk = (curr.stk as *mut StkBuffer) as u64;
+    let curr_stk = (curr.stack as *mut stacks::StkBuffer) as u64;
     let stk      = stacks::stk_alloc();
     let pid      = pcbs::PID.lock().get_next_pid();
     let ppid     = curr.pid;
     let children = 0;
+    println!("curr {:p} curr_stk {:x} cxt {:p}", curr, curr_stk, curr.cxt);
+    println!("stk {:x}", stk);
 
     stacks::stk_copy(curr_stk, stk);
 
-    let offset     = stk - curr_stk;
-    let curr_cxt   = (&mut *(curr.cxt) as *mut pcbs::Context) as u64;
-    let cxt        = curr_cxt + offset;
-    let cxt_struct = unsafe { &mut *(cxt as *mut pcbs::Context) };
-    cxt_struct.rbp += offset;
-    cxt_struct.rsp += offset;
-
-    let bp      = cxt_struct.rbp as *mut u64;
-    let bp_data = bp;
-    while bp && bp_data {
-        bp_data = ptr::read_volatile(bp);
-        bp_data += offset;
-        ptr::write_volatile(bp, bp_data);
-        bp = ptr::read_volatile(bp_data as *mut u64) as *mut u64;
+    let offset     = stk as i64 - curr_stk as i64;
+    let offset_u: u64;
+    if offset < 0 {
+        offset_u = (offset * -1) as u64
     }
+    else {
+        offset_u = offset as u64;
+    }
+    let curr_cxt   = (&mut *(curr.cxt) as *mut pcbs::Context) as u64;
+    let mut cxt    = curr_cxt;
+    if offset < 0 {
+        cxt = curr_cxt - offset_u;
+    }
+    else {
+        cxt = curr_cxt + offset_u;
+    }
+    let cxt_struct = unsafe { &mut *(cxt as *mut pcbs::Context) };
+    if offset < 0 {
+        //println!("rsp {:x} curr rsp {:x}, rbp {:x}", cxt_struct.rsp, curr.cxt.rsp, curr.cxt.rbp);
+        //cxt_struct.rbp = curr.cxt.rbp - offset_u;
+        cxt_struct.rsp = curr.cxt.rsp - offset_u;
+    }
+    else {
+        //cxt_struct.rbp = curr.cxt.rbp + offset_u;
+        cxt_struct.rsp = curr.cxt.rbp + offset_u;
+    }
+/*
+    let mut bp      = cxt_struct.rbp as *mut u64;
+    let mut bp_data = bp as u64;
+    while bp as u64 != 0 && bp_data != 0 {
+        unsafe {
+            bp_data = ptr::read_volatile(bp);
 
-    cxt_struct.rax += 0;
-    curr.cxt.rax    = pid;
+            if offset < 0 {
+                bp_data -= offset_u;
+            }
+            else {
+                bp_data += offset_u;
+            }
+
+            ptr::write_volatile(bp, bp_data);
+            bp = ptr::read_volatile(bp_data as *mut u64) as *mut u64;
+        }
+    }
+*/
+    cxt_struct.rax  = 0;
+    curr.cxt.rax    = pid as u64;
     curr.children  += 1;
 
     let spot = scheduler::SCHED.lock()._add_proc(cxt, stk, 0, 0, pid, ppid, 0) as i8;
@@ -96,7 +127,7 @@ fn _sys_fork() {
 fn _sys_exec() {
     let curr = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };
     let entry = curr.cxt.rdi;
-    let cxt = stacks::_stk_setup(curr.stk, entry);
+    let cxt = stacks::_stk_setup(curr.stack, entry);
     scheduler::set_curr_cxt_wrap(cxt);
 }
 
