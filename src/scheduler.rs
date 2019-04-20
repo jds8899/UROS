@@ -14,7 +14,7 @@ extern "C" {
     fn _kmalloc(size:u64) -> usize;
 }
 
-const NUM_PROC: u8 = 8;
+pub static NUM_PROC: u8 = 8;
 const QUANTUM_STD: u8 = 5;
 
 pub struct Scheduler {
@@ -40,7 +40,7 @@ struct Procs {
 
 impl Scheduler {
     pub fn _add_proc(&mut self, cxt: u64, stk:u64, event:u32, extst:u32,
-                     pid:u16, ppid:u16, children:u16) {
+                     pid:u16, ppid:u16, children:u16) -> usize {
         let mut next = 0 as usize;
         if self.in_use == 0 {
             next = 0;
@@ -77,6 +77,7 @@ impl Scheduler {
         self.procs.data[next].ppid       = ppid;
         self.procs.data[next].children   = children;
 
+        return next;
         //self.procs.data[next].state = pcbs::e_states::ST_READY;
     }
 
@@ -127,6 +128,10 @@ impl Scheduler {
         for i in 0..NUM_PROC {
             self.q.data[i as usize] = -1;
         }
+    }
+
+    pub fn get_in_use(&mut self) -> u8 {
+        return self.in_use;
     }
 }
 

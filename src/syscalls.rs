@@ -7,6 +7,7 @@ use crate::scheduler;
 use crate::x86arch;
 use crate::pcbs;
 use crate::clock;
+use crate::stacks;
 use crate::println;
 
 extern "C" {
@@ -52,9 +53,52 @@ impl SysTbl {
 
 fn _sys_exit() {}
 
-fn _sys_fork() {}
+fn _sys_fork() {
+    let in_use = scheduler::SCHED.lock().get_in_use();
+    if in_use >= NUM_PROC  {
+        //TODO error too many proc
+        return;
+    }
 
-fn _sys_exec() {}
+    let curr     = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };
+    let curr_stk = (curr.stk as *mut StkBuffer) as u64;
+    let stk      = stacks::stk_alloc();
+    let pid      = pcbs::PID.lock().get_next_pid();
+    let ppid     = curr.pid;
+    let children = 0;
+
+    stacks::stk_copy(curr_stk, stk);
+
+    let offset     = stk - curr_stk;
+    let curr_cxt   = (&mut *(curr.cxt) as *mut pcbs::Context) as u64;
+    let cxt        = curr_cxt + offset;
+    let cxt_struct = unsafe { &mut *(cxt as *mut pcbs::Context) };
+    cxt_struct.rbp += offset;
+    cxt_struct.rsp += offset;
+
+    let bp      = cxt_struct.rbp as *mut u64;
+    let bp_data = bp;
+    while bp && bp_data {
+        bp_data = ptr::read_volatile(bp);
+        bp_data += offset;
+        ptr::write_volatile(bp, bp_data);
+        bp = ptr::read_volatile(bp_data as *mut u64) as *mut u64;
+    }
+
+    cxt_struct.rax += 0;
+    curr.cxt.rax    = pid;
+    curr.children  += 1;
+
+    let spot = scheduler::SCHED.lock()._add_proc(cxt, stk, 0, 0, pid, ppid, 0) as i8;
+    scheduler::SCHED.lock()._schedule(spot);
+}
+
+fn _sys_exec() {
+    let curr = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };
+    let entry = curr.cxt.rdi;
+    let cxt = stacks::_stk_setup(curr.stk, entry);
+    scheduler::set_curr_cxt_wrap(cxt);
+}
 
 fn _sys_time() {
     let curr = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };

@@ -65,6 +65,14 @@ pub fn stk_alloc() -> u64 {
     return unsafe { _kmalloc(STACK_SIZE as u64 * 8) as u64};
 }
 
+pub fn stk_copy(s1:u64, s2:u64) {
+    let s1_buff unsafe { &mut *(s1 as *mut StkBuffer) };
+    let s2_buff unsafe { &mut *(s2 as *mut StkBuffer) };
+    for i in 0..STACK_SIZE {
+        s1_buff[i] = s2_buff[i];
+    }
+}
+
 #[no_mangle]
 pub fn _stk_setup(s: &'static mut StkBuffer, entry: u64) -> u64 {
     s.data[STACK_SIZE - 1] = 0;
