@@ -21,6 +21,7 @@ SYS_exec = 0x2
 SYS_time = 0x3
 SYS_pid = 0x4
 SYS_ppid = 0x5
+SYS_wait = 0x6
 INT_VEC_SYSCALL = 0x42
 
 
@@ -51,7 +52,7 @@ SYSCALL(exit)
 SYSCALL(fork)
 SYSCALL(exec)
 //SYSCALL(kill)
-//SYSCALL(wait)
+SYSCALL(wait)
 //SYSCALL(sleep)
 SYSCALL(time)
 SYSCALL(pid)

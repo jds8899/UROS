@@ -23,8 +23,9 @@ const SYS_exec: usize = 2;
 const SYS_time: usize = 3;
 const SYS_pid:  usize = 4;
 const SYS_ppid: usize = 5;
+const SYS_wait: usize = 6;
 
-const NUM_SYSCALLS: usize = 6;
+const NUM_SYSCALLS: usize = 7;
 
 static INT_VEC_SYSCALL: i8 = 0x42;
 
@@ -44,6 +45,7 @@ impl SysTbl {
         self.syscalls.data[SYS_time] = _sys_time;
         self.syscalls.data[SYS_pid]  = _sys_pid;
         self.syscalls.data[SYS_ppid] = _sys_ppid;
+        self.syscalls.data[SYS_wait] = _sys_wait;
     }
 
     pub fn _call(&mut self, code:usize) {
@@ -51,7 +53,13 @@ impl SysTbl {
     }
 }
 
-fn _sys_exit() {}
+fn _sys_exit() {
+    let curr        = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };
+    let status      = curr.cxt.rdi;
+    curr.exitstatus = status as u32;
+    scheduler::SCHED.lock().bite(curr.spot);
+    scheduler::SCHED.lock()._dispatch();
+}
 
 fn _sys_fork() {
     let in_use = scheduler::SCHED.lock().get_in_use();
@@ -66,8 +74,8 @@ fn _sys_fork() {
     let pid      = pcbs::PID.lock().get_next_pid();
     let ppid     = curr.pid;
     let children = 0;
-    println!("curr {:p} curr_stk {:x} cxt {:p}", curr, curr_stk, curr.cxt);
-    println!("stk {:x}", stk);
+    //println!("curr {:p} curr_stk {:x} cxt {:p}", curr, curr_stk, curr.cxt);
+    //println!("stk {:x}", stk);
 
     stacks::stk_copy(curr_stk, stk);
 
@@ -146,6 +154,30 @@ fn _sys_ppid() {
     curr.cxt.rax = curr.ppid as u64;
 }
 
+fn _sys_wait() {
+    let curr = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };
+
+    if curr.children < 1 {
+        curr.cxt.rax = 9 as u64;
+        return
+    }
+
+    let zombo = scheduler::SCHED.lock().find_zombie(curr.ppid);
+
+    if zombo == 9 {
+        //println!("p wait");
+        curr.state = pcbs::ST_WAITING;
+        scheduler::SCHED.lock()._dispatch();
+    }
+    else {
+        //println!("awaken, father");
+        let child = scheduler::SCHED.lock().get_pid(zombo);
+        curr.cxt.rax = child as u64;
+        scheduler::SCHED.lock().rem_pcb(zombo);
+    }
+
+}
+
 fn _sys_isr(vector:i32, ecode:i32) {
     let curr = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };
     let mut code = curr.cxt.rax as usize;
@@ -167,6 +199,7 @@ lazy_static! {
 }
 
 pub fn _syscall_init() {
+    println!("SYSCALL");
     SYSC.lock()._syscall_init();
     interrupt::INT.lock().__install_isr(INT_VEC_SYSCALL as usize, _sys_isr);
 }

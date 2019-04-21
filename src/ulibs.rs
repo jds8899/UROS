@@ -12,6 +12,8 @@ extern "C" {
     fn pid() -> u16;
     #[no_mangle]
     fn ppid() -> u16;
+    #[no_mangle]
+    fn wait() -> u16;
 }
 
 pub fn sys_exit() {
@@ -37,6 +39,10 @@ pub fn sys_pid() -> u16 {
 
 pub fn sys_ppid() -> u16 {
     return unsafe { ppid() };
+}
+
+pub fn sys_wait() -> u16 {
+    return unsafe { wait() };
 }
 
 pub fn spawn(entry:u64) {

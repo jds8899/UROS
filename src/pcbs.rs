@@ -8,17 +8,15 @@ use crate::common;
 use crate::c_io;
 use crate::stacks::StkBuffer;
 
-pub enum e_states {
-    ST_UNUSED,
-    ST_NEW,
-    ST_RUNNING,
-    ST_SLEEPING,
-    ST_WAITING,
-    ST_BLOCKED_IO,
-    ST_KILLED,
-    ST_ZOMBIE,
-    ST_READY  // must always be last!
-}
+pub static ST_UNUSED: u8 = 0;
+pub static ST_NEW: u8 = 1;
+pub static ST_RUNNING: u8 = 2;
+pub static ST_SLEEPING: u8 = 3;
+pub static ST_WAITING: u8 = 4;
+pub static ST_BLOCKED_IO: u8 = 5;
+pub static ST_KILLED: u8 = 6;
+pub static ST_ZOMBIE: u8 = 7;
+pub static ST_READY: u8 = 8;  // must always be last!
 
 pub const PID_INIT: u16 = 1;
 const PID_FIRST: u16 = 100;
@@ -75,7 +73,7 @@ pub struct Pcb {
     pub ppid: u16,
     pub children: u16,
 
-    pub state: e_states,
+    pub state: u8,
     pub ticks: u8,
     pub spot: i8,
 }

@@ -14,7 +14,7 @@ extern "C" {
     #[no_mangle]
     fn _kmalloc(size:u64) -> usize;
     #[no_mangle]
-    static do_exit: u64;
+    fn do_exit();
 }
 
 pub const STACK_SIZE: usize = 1024;
@@ -75,9 +75,11 @@ pub fn stk_copy(src:u64, dst:u64) {
 
 #[no_mangle]
 pub fn _stk_setup(s: &'static mut StkBuffer, entry: u64) -> u64 {
+    let ext = (do_exit as *mut fn()) as u64;
+
     s.data[STACK_SIZE - 1] = 0;
-    s.data[STACK_SIZE - 2] = unsafe { do_exit };
-    println!("zero {}, exit {:x}, entry {:x}", s.data[STACK_SIZE - 1], s.data[STACK_SIZE - 2], entry);
+    s.data[STACK_SIZE - 2] = ext;
+    //println!("zero {}, exit {:x}, entry {:x}", s.data[STACK_SIZE - 1], s.data[STACK_SIZE - 2], entry);
 
     let ptr = (&mut s.data[STACK_SIZE - 2] as *mut u64) as u64;
     let ret = ptr - mem::size_of::<pcbs::Context>() as u64;

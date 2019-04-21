@@ -41,6 +41,9 @@ struct Procs {
 impl Scheduler {
     pub fn _add_proc(&mut self, cxt: u64, stk:u64, event:u32, extst:u32,
                      pid:u16, ppid:u16, children:u16) -> usize {
+        if self.in_use == 7 {
+            return 9;
+        }
         let mut next = 0 as usize;
         if self.in_use == 0 {
             next = 0;
@@ -54,11 +57,11 @@ impl Scheduler {
         }
         else {
             for i in 1..NUM_PROC {
-                let next_ind = ((i + self.current) % NUM_PROC) as usize;
-                if self.proc_stat.data[next_ind] == 0 {
-                    next = next_ind;
-                    self.procs.data[next_ind].spot = next_ind as i8;
-                    self.proc_stat.data[next_ind]  = 1;
+                if self.proc_stat.data[i as usize] == 0 {
+                    next = i as usize;
+                    self.procs.data[next].spot = next as i8;
+                    self.proc_stat.data[next]  = 1;
+                    break;
                 }
             }
         }
@@ -76,13 +79,17 @@ impl Scheduler {
         self.procs.data[next].pid        = pid;
         self.procs.data[next].ppid       = ppid;
         self.procs.data[next].children   = children;
+        self.procs.data[next].state      = pcbs::ST_READY;
 
         return next;
         //self.procs.data[next].state = pcbs::e_states::ST_READY;
     }
 
     pub fn _schedule(&mut self, ind:i8) {
-        if self.q.data[self.sched_ptr as usize] == -1 {
+        if self.q.data[self.sched_ptr as usize] == -1 &&
+            self.procs.data[ind as usize].state != pcbs::ST_WAITING &&
+            self.procs.data[ind as usize].state != pcbs::ST_ZOMBIE {
+
             self.q.data[self.sched_ptr as usize] = ind;
             self.sched_ptr = (self.sched_ptr + 1) % NUM_PROC;
         }
@@ -93,7 +100,7 @@ impl Scheduler {
         self.current = (self.current + 1) % NUM_PROC;
 
         let ind  = self.q.data[self.current as usize] as usize;
-        self.procs.data[ind].state = pcbs::e_states::ST_RUNNING;
+        self.procs.data[ind].state = pcbs::ST_RUNNING;
         self.procs.data[ind].ticks = QUANTUM_STD;
     }
 
@@ -133,6 +140,66 @@ impl Scheduler {
     pub fn get_in_use(&mut self) -> u8 {
         return self.in_use;
     }
+
+    pub fn bite(&mut self, ind: i8) {
+
+        if self.procs.data[ind as usize].children > 0 {
+            for i in 0..NUM_PROC {
+                if i as i8 != ind {
+                    if self.procs.data[ind as usize].ppid == ind as u16 {
+                        self.procs.data[i as usize].ppid                 = 0;
+                        self.procs.data[ind as usize].children -= 1;
+                        self.procs.data[0].children            += 1;
+                    }
+                }
+            }
+        }
+
+        let mut parent = 0 as usize;
+        for i in 0..NUM_PROC {
+            if self.procs.data[i as usize].pid == self.procs.data[ind as usize].ppid {
+                parent = i as usize;
+            }
+        }
+        if self.procs.data[parent].state == pcbs::ST_WAITING {
+            //println!("p found");
+            self.procs.data[parent].cxt.rax   = self.procs.data[ind as usize].pid as u64;
+            self.procs.data[parent].state     = pcbs::ST_READY;
+            self.procs.data[parent].children -= 1;
+            let sched_spot = self.procs.data[parent].spot;
+            self._schedule(sched_spot);
+            self.in_use -= 1;
+            self.proc_stat.data[ind as usize] = 0;
+        }
+        else {
+            //println!("p not found");
+            self.procs.data[ind as usize].state = pcbs::ST_ZOMBIE;
+        }
+
+    }
+
+    pub fn find_zombie(&mut self, ppid: u16) -> i8 {
+        let mut ret = 9 as i8;
+        for i in 0..NUM_PROC {
+            //println!("proc ppid {} ppid {} state {}", self.procs.data[i as usize].ppid, ppid, self.procs.data[i as usize].state);
+            if self.procs.data[i as usize].ppid == ppid &&
+                self.procs.data[i as usize].state == pcbs::ST_ZOMBIE {
+                    ret = i as i8;
+                    break;
+            }
+        }
+        return ret
+    }
+
+    pub fn get_pid(&mut self, ind:i8) -> u16 {
+        return self.procs.data[ind as usize].pid;
+    }
+
+    pub fn rem_pcb(&mut self, ind:i8) {
+        self.proc_stat.data[ind as usize] = 0;
+        self.procs.data[ind as usize].state = pcbs::ST_UNUSED;
+        self.in_use -= 1;
+    }
 }
 
 lazy_static! {
@@ -157,5 +224,6 @@ pub fn set_curr_cxt_wrap(rsp:u64) {
 }
 
 pub fn _scheduler_init() {
+    println!("SCHED");
     SCHED.lock()._clear_sched();
 }

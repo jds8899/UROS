@@ -48,7 +48,7 @@ pub extern fn rs_sys_init() {
     scheduler::SCHED.lock()._add_proc(cxt, stk_addr, 0, 0, pcbs::PID_INIT, pcbs::PID_INIT, 0);
     scheduler::SCHED.lock()._schedule(0);
     scheduler::SCHED.lock()._dispatch();
-    scheduler::SCHED.lock().dump_curr();
+    //scheduler::SCHED.lock().dump_curr();
     //loop{}
 }
 
