@@ -31,6 +31,7 @@ extern "C" {
 pub extern fn rs_sys_init() {
     c_io::WRITER.lock().c_clearscreen();
     c_io::WRITER.lock().c_setscroll(0,7,99,99);
+    c_io::WRITER.lock().c_puts_at(0,0,"Written in Rust :(");
     c_io::WRITER.lock().c_puts_at(0,6,"================================================================================");
     c_io::WRITER.lock().c_puts("System init starting\n");
     c_io::WRITER.lock().c_puts("--------------------\n");

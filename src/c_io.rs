@@ -217,6 +217,25 @@ macro_rules! println {
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
 }
 
+#[macro_export]
+macro_rules! uprint {
+    ($($arg:tt)*) => ($crate::c_io::_uprint(format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! uprintln {
+    () => ($crate::uprint!("\n"));
+    ($($arg:tt)*) => ($crate::uprint!("{}\n", format_args!($($arg)*)));
+}
+
+#[doc(hidden)]
+pub fn _uprint(args: fmt::Arguments) {
+    use core::fmt::Write;
+    unsafe { asm!("CLI") };
+    WRITER.lock().write_fmt(args).unwrap();
+    unsafe { asm!("STI") };
+}
+
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;

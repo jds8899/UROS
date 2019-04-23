@@ -1,4 +1,7 @@
 use crate::println;
+use crate::print;
+use core::fmt;
+
 extern "C" {
     #[no_mangle]
     fn exit();

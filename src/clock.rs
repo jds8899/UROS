@@ -51,7 +51,7 @@ impl Clock {
 }
 
 pub fn _clk_isr(vector:i32, code:i32) {
-    //CLK.lock().pin_deal();
+    CLK.lock().pin_deal();
     CLK.lock().incr_time();
 
     let curr = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };
