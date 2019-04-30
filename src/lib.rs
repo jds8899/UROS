@@ -1,3 +1,12 @@
+///
+/// lib.rs
+///
+/// Author: Jonathan Schenk
+///
+/// The root file for our Rust library. Also contains the system init function.
+///
+////////////////////////////////////////////////////////////////////////////////
+
 #![feature(lang_items)]
 #![no_std]
 #![feature(const_fn)]
@@ -27,11 +36,12 @@ extern "C" {
     fn __isr_restore();
 }
 
+/// System initialization
 #[no_mangle]
 pub extern fn rs_sys_init() {
     c_io::WRITER.lock().c_clearscreen();
     c_io::WRITER.lock().c_setscroll(0,7,99,99);
-    c_io::WRITER.lock().c_puts_at(0,0,"Written in Rust :(");
+    //c_io::WRITER.lock().c_puts_at(0,0,"Written in Rust :(");
     c_io::WRITER.lock().c_puts_at(0,6,"================================================================================");
     c_io::WRITER.lock().c_puts("System init starting\n");
     c_io::WRITER.lock().c_puts("--------------------\n");
@@ -57,6 +67,7 @@ pub extern fn rs_sys_init() {
 #[no_mangle]
 pub extern fn eh_personality() {}
 
+/// A panic handler that I don't know how to invoke
 #[panic_handler]
 #[no_mangle]
 pub fn panic(_info: &PanicInfo) -> ! {

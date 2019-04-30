@@ -147,8 +147,8 @@ FMK_S_SRC = long_mode.S	startup.S isr_stubs.S $(U_S_SRC)
 
 # C object/source files
 
-FMK_C_OBJ =	c_io.o support.o $(U_C_OBJ)
-FMK_C_SRC =	c_io.c support.c $(U_C_SRC)
+FMK_C_OBJ =	$(U_C_OBJ)
+FMK_C_SRC =	$(U_C_SRC)
 
 # Collections of files
 
@@ -181,51 +181,3 @@ realclean:	clean
 depend:
 	makedepend $(INCLUDES) $(SOURCES)
 
-# DO NOT DELETE THIS LINE -- make depend depends on it.
-
-startup.o: long_mode.h bootstrap.h
-long_mode.o: bootstrap.h
-isr_stubs.o: bootstrap.h
-c_io.o: c_io.h startup.h support.h x86arch.h
-support.o: startup.h support.h c_io.h x86arch.h
-support.o: bootstrap.h
-clock.o: x86arch.h startup.h common.h c_io.h kmalloc.h
-clock.o: support.h system.h bootstrap.h pcbs.h stacks.h queues.h klib.h
-clock.o: clock.h scheduler.h sio.h syscalls.h
-klibc.o: common.h c_io.h kmalloc.h support.h system.h
-klibc.o: x86arch.h bootstrap.h pcbs.h stacks.h queues.h
-klibc.o: klib.h scheduler.h sio.h
-kmalloc.o: common.h c_io.h kmalloc.h support.h system.h
-kmalloc.o: x86arch.h bootstrap.h pcbs.h stacks.h
-kmalloc.o: queues.h klib.h
-pcbs.o: common.h c_io.h kmalloc.h support.h system.h
-pcbs.o: x86arch.h bootstrap.h pcbs.h stacks.h queues.h
-pcbs.o: klib.h
-queues.o: common.h c_io.h kmalloc.h support.h system.h
-queues.o: x86arch.h bootstrap.h pcbs.h stacks.h
-queues.o: queues.h klib.h scheduler.h sio.h
-scheduler.o: common.h c_io.h kmalloc.h support.h system.h
-scheduler.o: x86arch.h bootstrap.h pcbs.h stacks.h
-scheduler.o: queues.h klib.h scheduler.h
-sio.o: common.h c_io.h kmalloc.h support.h system.h
-sio.o: x86arch.h bootstrap.h pcbs.h stacks.h queues.h
-sio.o: klib.h sio.h scheduler.h startup.h uart.h
-stacks.o: common.h c_io.h kmalloc.h support.h system.h
-stacks.o: x86arch.h bootstrap.h pcbs.h stacks.h
-stacks.o: queues.h klib.h
-syscalls.o: common.h c_io.h kmalloc.h support.h system.h
-syscalls.o: x86arch.h bootstrap.h pcbs.h stacks.h
-syscalls.o: queues.h klib.h uart.h startup.h syscalls.h
-syscalls.o: scheduler.h clock.h sio.h
-system.o: common.h c_io.h kmalloc.h support.h system.h
-system.o: x86arch.h bootstrap.h pcbs.h stacks.h
-system.o: queues.h klib.h clock.h syscalls.h sio.h scheduler.h users.h
-ulibc.o: common.h c_io.h kmalloc.h support.h system.h
-ulibc.o: x86arch.h bootstrap.h pcbs.h stacks.h queues.h
-ulibc.o: klib.h
-users.o: common.h c_io.h kmalloc.h support.h system.h
-users.o: x86arch.h bootstrap.h pcbs.h stacks.h queues.h
-users.o: klib.h users.h
-ulibs.o: syscalls.h common.h c_io.h kmalloc.h support.h system.h
-ulibs.o: x86arch.h bootstrap.h pcbs.h stacks.h queues.h
-ulibs.o: klib.h

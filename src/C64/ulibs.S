@@ -77,8 +77,8 @@ SYSCALL(ppid)
 
 	.globl  do_exit
 do_exit:
-	movq   %rax, %rdi    // use whatever was in EAX as the status
-	call    exit    // terminate this process
+	movq	%rax, %rdi    // use whatever was in EAX as the status
+	call	exit    // terminate this process
 
 /*
 ** get_ra()

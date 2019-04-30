@@ -1,3 +1,12 @@
+///
+/// pcbs.rs
+///
+/// Author: Jonathan Schenk
+///
+/// Mostly just holds pcb structs. Also has global struct for getting pids.
+///
+////////////////////////////////////////////////////////////////////////////////
+
 use core::ptr;
 use core::ffi;
 use spin::Mutex;
@@ -8,6 +17,8 @@ use crate::common;
 use crate::c_io;
 use crate::stacks::StkBuffer;
 
+/// This should be an enum of process states, but Rust's enum comparison
+/// stuff is bad.
 pub static ST_UNUSED: u8 = 0;
 pub static ST_NEW: u8 = 1;
 pub static ST_RUNNING: u8 = 2;
@@ -26,6 +37,7 @@ pub struct Pids {
 }
 
 impl Pids {
+    /// Returns the next pid
     pub fn get_next_pid(&mut self) -> u16 {
         let ret = self.curr;
         self.curr += 1;
@@ -33,6 +45,7 @@ impl Pids {
     }
 }
 
+/// Context struct. Holds all registers
 #[no_mangle]
 #[repr(C)]
 pub struct Context {
@@ -63,21 +76,22 @@ pub struct Context {
 #[no_mangle]
 #[repr(C)]
 pub struct Pcb {
-    pub cxt: &'static mut Context,
-    pub stack: &'static mut StkBuffer,
+    pub cxt: &'static mut Context,     // context pointer
+    pub stack: &'static mut StkBuffer, // stack
 
-    pub event: u32,
-    pub exitstatus: u32,
+    pub event: u32,      // event for things like sleep
+    pub exitstatus: u32, // How did we exit?
 
-    pub pid: u16,
-    pub ppid: u16,
-    pub children: u16,
+    pub pid: u16,      // Process ID
+    pub ppid: u16,     // Parent Process ID
+    pub children: u16, // Number of children
 
-    pub state: u8,
-    pub ticks: u8,
-    pub spot: i8,
+    pub state: u8,  // process state
+    pub ticks: u8,  // remaining quantum
+    pub spot: i8,   // Index in active queue
 }
 
+/// Global PID getter
 lazy_static! {
     pub static ref PID: Mutex<Pids> = Mutex::new(Pids {
         curr: PID_FIRST,

@@ -1,3 +1,12 @@
+///
+/// c_io.rs
+///
+/// Author: Jonathan Schenk
+///
+/// Module for the kernel's only form of output. Uses VGA text mode.
+///
+////////////////////////////////////////////////////////////////////////////////
+
 use core::ptr;
 use core::fmt;
 use spin::Mutex;
@@ -7,6 +16,7 @@ extern "C" {
     fn __outb(port:i32, value:i32);
 }
 
+/// Screen constants
 const SCREEN_MIN_X:  u32 = 0;
 const SCREEN_MIN_Y:  u32 = 0;
 const SCREEN_SIZE_X: u32 = 80;
@@ -28,11 +38,23 @@ pub struct Cio {
     buffer: &'static mut Buffer,
 }
 
+/// Our print buffer at 0xB8000
 struct Buffer {
     data: [[u16; (SCREEN_SIZE_X as usize)]; (SCREEN_SIZE_Y as usize)],
 }
 
 impl Cio {
+    ///
+    /// Makes sure a value lies between min and max
+    ///
+    /// param:
+    ///     min: min val
+    ///     val: val to bound
+    ///     max: max val
+    ///
+    /// returns:
+    ///     a value between min and max
+    ///
     fn bound(min:u32, val:u32, max:u32) -> u32 {
         let mut ret = val;
         if ret < min {
@@ -44,6 +66,13 @@ impl Cio {
         return ret;
     }
 
+    ///
+    /// Puts character at the specified location
+    ///
+    /// param:
+    ///     x,y: where we want to print the character
+    ///     c: char to print
+    ///
     fn __c_putchar_at(&mut self, x:u32, y:u32, c:u8) {
         if x < self.max_x && y <= self.max_y {
             let addr = &mut self.buffer.data[y as usize][x as usize] as *mut u16;
@@ -52,6 +81,12 @@ impl Cio {
         }
     }
 
+    ///
+    /// Moves cursor to specified location
+    ///
+    /// param:
+    ///     x,y: where we want to move the cursor to
+    ///
     fn __c_setcursor(&mut self) {
         let mut y = self.curr_y;
 
@@ -69,6 +104,13 @@ impl Cio {
         }
     }
 
+    ///
+    /// Sets the scroll area of the console
+    ///
+    /// param:
+    ///     s_min_x,s_min_y: upper boundary of the scroll area
+    ///     s_max_x,s_max_y: lower boundary of the scroll area
+    ///
     pub fn c_setscroll(&mut self, s_min_x:u32, s_min_y:u32, s_max_x:u32, s_max_y:u32) {
         self.scroll_min_x = Cio::bound(self.min_x, s_min_x, self.max_x);
         self.scroll_min_y = Cio::bound(self.min_y, s_min_y, self.max_y);
@@ -79,12 +121,25 @@ impl Cio {
         self.__c_setcursor();
     }
 
+    ///
+    /// Moves cursor to specified location in scroll region
+    ///
+    /// param:
+    ///     x,y: where we want to move the cursor to
+    ///
     pub fn c_moveto(&mut self, x:u32, y:u32) {
         self.curr_x = Cio::bound(self.scroll_min_x, x + self.scroll_min_x, self.scroll_max_x);
         self.curr_y = Cio::bound(self.scroll_min_y, y + self.scroll_min_y, self.scroll_max_y);
         self.__c_setcursor();
     }
 
+    ///
+    /// Prints a character at specified location
+    ///
+    /// param:
+    ///     x,y: where we want to print
+    ///     c: char to print
+    ///
     pub fn c_putchar_at(&mut self, mut x:u32, y:u32, c:u8) {
         if (c & 0x7f) == b'\n' {
             let mut limit = 0 as u32;
@@ -108,6 +163,12 @@ impl Cio {
         }
     }
 
+    ///
+    /// Prints a character at the cursor's location
+    ///
+    /// param:
+    ///     c: char to print
+    ///
     pub fn c_putchar(&mut self, c:u8) {
         if self.curr_y >= self.scroll_max_y {
             let diff = self.curr_y - self.scroll_max_y + 1;
@@ -143,6 +204,13 @@ impl Cio {
         self.__c_setcursor()
     }
 
+    ///
+    /// Prints a string at specified location
+    ///
+    /// param:
+    ///     x,y: where we want to print
+    ///     s: string to print
+    ///
     pub fn c_puts_at(&mut self, mut x:u32, mut y:u32, s: &str) {
         for c in s.bytes() {
             if x > self.max_x {continue};
@@ -151,6 +219,12 @@ impl Cio {
         }
     }
 
+    ///
+    /// Prints a string where the cursor is
+    ///
+    /// param:
+    ///     s: string to print
+    ///
     pub fn c_puts(&mut self, s: &str) {
         //unsafe { asm!("CLI") };
         for c in s.bytes() {
@@ -159,6 +233,9 @@ impl Cio {
         //unsafe { asm!("STI") };
     }
 
+    ///
+    /// Clears the whole screen
+    ///
     pub fn c_clearscreen(&mut self) {
         for y in 0..self.max_y {
             for x in 0..self.max_x {
@@ -167,6 +244,9 @@ impl Cio {
         }
     }
 
+    ///
+    /// Clears the scroll area
+    ///
     pub fn c_clearscroll(&mut self) {
         for y in self.scroll_min_y..self.scroll_max_y {
             for x in self.scroll_min_x..self.scroll_max_x {
@@ -175,6 +255,12 @@ impl Cio {
         }
     }
 
+    ///
+    /// Scrolls the scroll area
+    ///
+    /// param:
+    ///     lines: number of lines to scroll
+    ///
     pub fn c_scroll(&mut self, lines:u32) {
         if lines > self.scroll_max_y - self.scroll_min_y {
             self.c_clearscroll();
@@ -199,12 +285,20 @@ impl Cio {
     }
 }
 
+///
+/// Writer used by print and println family.
+///
 impl fmt::Write for Cio {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         self.c_puts(s);
         Ok(())
     }
 }
+
+/// The print family of macros
+/// All take the Argmuments type as input. They take a format string and
+/// a variable number of args, similar to printf.
+/// Println adds a newline at the end.
 
 #[macro_export]
 macro_rules! print {
@@ -228,6 +322,7 @@ macro_rules! uprintln {
     ($($arg:tt)*) => ($crate::uprint!("{}\n", format_args!($($arg)*)));
 }
 
+/// Print that the user print macros use. Turns off interrupts to avoid deadlock
 #[doc(hidden)]
 pub fn _uprint(args: fmt::Arguments) {
     use core::fmt::Write;
@@ -236,12 +331,14 @@ pub fn _uprint(args: fmt::Arguments) {
     unsafe { asm!("STI") };
 }
 
+/// Print that the print macros use
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
     WRITER.lock().write_fmt(args).unwrap();
 }
 
+/// Global writer
 lazy_static! {
     pub static ref WRITER: Mutex<Cio> = Mutex::new(Cio {
         scroll_min_x: 0,
@@ -258,6 +355,7 @@ lazy_static! {
     });
 }
 
+/// Tests for console output
 pub fn cio_test() {
 
     WRITER.lock().c_moveto(0, 0);

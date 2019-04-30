@@ -1,3 +1,12 @@
+///
+/// clock.rs
+///
+/// Author: Jonathan Schenk
+///
+/// Clock module
+///
+////////////////////////////////////////////////////////////////////////////////
+
 use core::ptr;
 use core::ffi;
 use spin::Mutex;
@@ -18,8 +27,10 @@ extern "C" {
     static __isr_stub_table: usize;
 }
 
+/// Pinwheel characters
 static pin: [char; 4] = ['|', '/', '-', '\\'];
 
+/// Clock struct
 pub struct Clock {
     pinwheel: i32,
     pindex: u32,
@@ -27,18 +38,36 @@ pub struct Clock {
 }
 
 impl Clock {
+    ///
+    /// Sets time. Shouldn't be used, really
+    ///
+    /// param:
+    ///     t: time to set time to
+    ///
     pub fn set_time(&mut self, t:u64) {
         self.system_time = t;
     }
 
+    ///
+    /// Increments system time
+    ///
     pub fn incr_time(&mut self) {
         self.system_time += 1;
     }
 
+    ///
+    /// Fetches system time
+    ///
+    /// return:
+    ///     system time
+    ///
     pub fn get_time(&mut self) -> u64 {
         return self.system_time;
     }
 
+    ///
+    /// Deals with the printing of the pinwheel
+    ///
     pub fn pin_deal(&mut self) {
         self.pinwheel += 1;
         if(self.pinwheel == (common::CLOCK_FREQUENCY / 10)) {
@@ -50,14 +79,22 @@ impl Clock {
     }
 }
 
+///
+/// ISR for the clock. Does a bunch.
+///
+/// params: the usual for isrs
+///
 pub fn _clk_isr(vector:i32, code:i32) {
     CLK.lock().pin_deal();
     CLK.lock().incr_time();
 
+    // Get current process
     let curr = unsafe { &mut *(scheduler::SCHED.lock().get_curr() as *mut pcbs::Pcb) };
     let cxt = (curr.cxt as *mut pcbs::Context) as u64;
     let stk = (curr.stack as *mut stacks::StkBuffer) as u64;
+    // Decrement its time on the CPU
     curr.ticks -= 1;
+    // If no more time, reschedule and dispatch a new proc
     if curr.ticks < 1 {
         scheduler::SCHED.lock()._schedule(curr.spot);
         scheduler::SCHED.lock()._dispatch();
@@ -67,6 +104,7 @@ pub fn _clk_isr(vector:i32, code:i32) {
     unsafe { __outb(x86arch::PIC_MASTER_CMD_PORT, x86arch::PIC_EOI) };
 }
 
+/// Global clock struct
 lazy_static! {
     pub static ref CLK: Mutex<Clock> = Mutex::new(Clock {
         pinwheel: (common::CLOCK_FREQUENCY / 10) - 1,
@@ -75,10 +113,12 @@ lazy_static! {
     });
 }
 
+/// Initialize the ol clock
 pub fn _clk_init() {
     let mut divisor: i32;
     println!("CLOCK");
 
+    // Set clock frequency
     divisor = common::TIMER_FREQUENCY / common::CLOCK_FREQUENCY;
     unsafe {
         __outb(x86arch::TIMER_CONTROL_PORT, x86arch::TIMER_0_LOAD | x86arch::TIMER_0_SQUARE);

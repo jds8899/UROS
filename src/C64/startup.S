@@ -82,8 +82,6 @@ clearbss:
 #endif
 
 #ifdef SP_OS_CONFIG
-stop:
-jmp stop
 	call	_long_mode_init
 
 /*

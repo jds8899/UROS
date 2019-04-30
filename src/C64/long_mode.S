@@ -16,6 +16,9 @@
 
 	.globl _long_mode_init
 
+/*
+** Entry point for Long Mode initialization.
+*/
 _long_mode_init:
 	cli
 	call	check_cpuid
@@ -26,147 +29,161 @@ _long_mode_init:
 	call	gdt_setup
 	ret
 
+/*
+** Checks if CPUID instruction is available.
+*/
 check_cpuid:
 	pushfl
-	pop		%eax
-	mov		%eax, %ecx
-	xor		$1 << 21, %eax
+	pop	%eax
+	mov	%eax, %ecx
+	xor	$1 << 21, %eax
 	push	%eax
 	popfl
 
 	pushfl
-	pop		%eax
+	pop	%eax
 	push	%ecx
 	popfl
 
-	xor		%ecx, %eax
-	jz		no_cpuid
+	xor	%ecx, %eax
+	jz	no_cpuid
 	ret
 
+/*
+** Realistically this should just bump back to a 32 bit OS
+*/
 no_cpuid:
 	hlt
 
+/*
+** Does the CPU support Long Mode?
+*/
 check_long_mode:
-	mov		$0x80000000, %eax
+	mov	$0x80000000, %eax
 	cpuid
-	cmp		$0x80000001, %eax
-	jb		no_long_mode
+	cmp	$0x80000001, %eax
+	jb	no_long_mode
 
-	mov		$0x80000001, %eax
+	mov	$0x80000001, %eax
 	cpuid
 	test	$1 << 29, %edx
-	jz		no_long_mode
+	jz	no_long_mode
 	ret
 
+/*
+** Enables floating point stuff (unused)
+*/
 xmm_enable:
-	mov		%cr0, %eax
-	and		$0xFFFB, %ax
-	or		$0x2, %ax
-	mov		%eax, %cr0
-	mov		%cr4, %eax
-	or		$3 << 9, %ax
-	mov		%eax, %cr4
+	mov	%cr0, %eax
+	and	$0xFFFB, %ax
+	or	$0x2, %ax
+	mov	%eax, %cr0
+	mov	%cr4, %eax
+	or	$3 << 9, %ax
+	mov	%eax, %cr4
 	ret
 
+/*
+** Sets up 4 level page table and maps 2MB
+*/
 enable_paging:
-	mov		$RMTEXT_ADDRESS, %edi
-	mov		%edi, %cr3
-	mov		%cr3, %edi
+	mov	$RMTEXT_ADDRESS, %edi
+	mov	%edi, %cr3
+	mov	%cr3, %edi
 
-	mov		$RMTEXT_ADDRESS, %edx
-	add		$0x1003, %edx
+	mov	$RMTEXT_ADDRESS, %edx
+	add	$0x1003, %edx
 	movl	%edx, (%edi)
-	add		$0x1000, %edi
-	add		$0x1000, %edx
+	add	$0x1000, %edi
+	add	$0x1000, %edx
 	movl	%edx, (%edi)
-	add		$0x1000, %edi
-	add		$0x1000, %edx
+	add	$0x1000, %edi
+	add	$0x1000, %edx
 	movl	%edx, (%edi)
-	add		$0x1000, %edi
+	add	$0x1000, %edi
 
-	mov		$0x00000003, %ebx
-	mov		$512, %ecx
+	mov	$0x00000003, %ebx
+	mov	$512, %ecx
 
 set_entry:
 	movl	%ebx, (%edi)
-	add		$0x1000, %ebx
-	add		$8, %edi
+	add	$0x1000, %ebx
+	add	$8, %edi
 	loop	set_entry
 
-	mov		%cr4, %eax
-	or		$1 << 5, %eax
-	mov		%eax, %cr4
+	mov	%cr4, %eax
+	or	$1 << 5, %eax
+	mov	%eax, %cr4
 
-	mov		$0xC0000080, %ecx
+	mov	$0xC0000080, %ecx
 	rdmsr
-	or		$1 << 8, %eax
+	or	$1 << 8, %eax
 	wrmsr
 
-	mov		%cr0, %eax
-	or		$1 << 31, %eax
-	mov		%eax, %cr0
+	mov	%cr0, %eax
+	or	$1 << 31, %eax
+	mov	%eax, %cr0
 
 	ret
 
+/*
+** Again, this should just bump back to a 32 bit OS
+*/
 no_long_mode:
 	hlt
 
+/*
+** Sets up 64 bit GDT
+*/
 gdt_setup:
 	call	move_gdt
 	lgdt	gdt_48
-	//jmp		*lme
 
+	// Hard coded jump to Long Mode that sets cs
 	.byte	0xEA
 	.long	long_mode_entry
 	.word	GDT64_CODE
 
 	.code64
 
+/*
+** Sets up 64 bit IDT (Apparently I never call this which means IDT 
+** has 128 vecs)
+*/
 idt_setup:
 	lidt	idt_48
 	ret
 
+/*
+** We are now in Long Mode. Set up segment regs, initialize OS and 
+** start the init process with a jump to __isr_restore.
+*/
 long_mode_entry:
 	cli
-	xor		%eax, %eax
-	mov		$GDT64_DATA, %ax
-	mov		%ax, %ds
-	mov		%ax, %es
-	mov		%ax, %fs
-	mov		%ax, %gs
-	xor		%ax, %ax
-	mov		%ax, %ss
-	//movq	$0x2f592f412f4b2f4f, %rax
-	//movq	%rax, (0xb8000)
+	xor	%eax, %eax
+	mov	$GDT64_DATA, %ax
+	mov	%ax, %ds
+	mov	%ax, %es
+	mov	%ax, %fs
+	mov	%ax, %gs
+	xor	%ax, %ax
+	mov	%ax, %ss
 	movq	$TARGET_STACK, %rbp	/* set up the system frame pointer */
-	movq	%rbp, %rsp	/* and stack pointer */
+	movq	%rbp, %rsp		/* and stack pointer */
 
 	.extern	rs_sys_init
-  call  _km_init
+	call	_km_init
 	call	rs_sys_init
 
-	//call	_init
 	jmp	__isr_restore   // defined in isr_stubs.S
 
 	.code32
-/*
-** This bad boy causes a fault and makes the computer restart.
-** Good for when you don't have any output and want to see how
-** far your code is getting.
-*/
-kill:
-	mov		$0xC0000080, %ecx
-	rdmsr
-	mov		$1, %edx
-	shl		$8, %edx
-	or		%edx, %eax
-	wrmsr
 
 /*
 ** Move the GDT entries from where they are to location 0000:0000
 **
-** As with the IDTR and GDTR loads, we need the offset for the GDT
-** data from the beginning of the segment (0000:0000).
+** GDT values hard coded because I couldn't get the copy to work
+** due to weirdness with segment registers.
 */
 move_gdt:
 	movl    $0x0000FFFF, %eax
@@ -191,7 +208,8 @@ idt_48:
 	.quad	IDT_ADDRESS
 
 /*
-** The GDT
+** The GDT. Not actually used because I couldn't get the copy to work.
+** Left for someone more powerful than I to get it to work.
 */
 start_gdt:
 
@@ -207,15 +225,15 @@ code_seg:	/* limit FFFFF, base 0, R/E code seg, 32-bit 4K */
 	.word	0x0000
 	.word	0x0000
 	.byte	0x00
-	.byte	0x98	/* : present, prio 0, C/D, R/E code */
-	.byte	0x20	/* : 4K, 32-bit, 0, 0, limit[19:16] */
+	.byte	0x98	
+	.byte	0x20	
 	.byte	0x00
 
 data_seg:	/* limit FFFFF, base 0, R/W data seg, 32-bit 4K */
 	.word	0x0000
 	.word	0x0000
 	.byte	0x00
-	.byte	0x90	/* : present, prio 0, C/D, R/W data */
+	.byte	0x90	
 	.byte	0x00
 	.byte	0x00
 

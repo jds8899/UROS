@@ -1,3 +1,14 @@
+///
+/// x86arch.rs
+///
+/// author: Jonathan Schenk?
+///
+/// This file contains the necessary definitions from x86arch.h.
+/// Rust can't use C header files so this file was necessary.
+///
+////////////////////////////////////////////////////////////////////////////////
+
+
 pub static EFLAGS_MB1: i32 = 0x00000002;
 pub static EFLAGS_IF: i32 = 0x00000200;
 

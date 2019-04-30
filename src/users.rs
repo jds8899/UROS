@@ -1,7 +1,21 @@
+///
+/// users.rs
+///
+/// author: Jonathan Schenk
+///
+/// This file contains some users to show that the OS actually does stuff
+///
+////////////////////////////////////////////////////////////////////////////////
+
 use crate::uprintln;
 use crate::uprint;
 use crate::ulibs;
 
+///
+/// init
+/// Description: The init process. Spawns the idle process and a user.
+/// Returns: status, although nothing ever picks this up :/
+///
 #[no_mangle]
 pub fn init() -> i32 {
     uprintln!("Spawning Idle");
@@ -23,6 +37,11 @@ pub fn init() -> i32 {
     return 1;
 }
 
+///
+/// idle
+/// Description: The idle process. Runs when nothing else is.
+/// Returns: status, although nothing ever picks this up :/
+///
 fn idle() -> i32 {
     uprintln!("IDLE");
     let pid = ulibs::sys_pid();
@@ -36,6 +55,11 @@ fn idle() -> i32 {
     }
 }
 
+///
+/// user_a
+/// Description: A user process. Prints a bunch of 'a's and exits.
+/// Returns: status, although nothing ever picks this up :/
+///
 fn user_a() -> i32 {
     for i in 0..10000 {
         let time = ulibs::sys_time();

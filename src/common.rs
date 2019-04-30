@@ -1,3 +1,12 @@
+///
+/// common.rs
+///
+/// author: Jonathan Schenk
+///
+/// This file functions similar to common.h in the baseline.
+///
+////////////////////////////////////////////////////////////////////////////////
+
 use crate::x86arch;
 
 pub static CLOCK_FREQUENCY: i32 = 1000;
